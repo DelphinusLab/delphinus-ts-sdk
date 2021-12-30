@@ -1,13 +1,16 @@
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-//import { RootState, AppThunk } from '../app/store';
-import { SubstrateAccountInfo, L1AccountInfo, BridgeMetadata } from './type';
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { SubstrateAccountInfo, L1AccountInfo } from './type';
 import { loginL1Account, deriveL2Account } from "./l1/account";
 import { tryLoginL2Account } from "./l2/utils";
 
 export interface AccountState {
-    l1Account?: L1AccountInfo;
-    l2Account?: SubstrateAccountInfo;
-    status: 'Loading' | 'L1AccountReady' | 'Ready';
+  l1Account?: L1AccountInfo;
+  l2Account?: SubstrateAccountInfo;
+  status: 'Loading' | 'L1AccountReady' | 'Ready';
+}
+
+export interface State {
+  account: AccountState;
 }
 
 const initialState: AccountState = {
@@ -27,9 +30,9 @@ export const loginL1AccountAsync = createAsyncThunk(
   }
 );
 
-export const loginL2AccountAsync = createAsyncThunk(
+export const loginL2AccountAsync = createAsyncThunk<SubstrateAccountInfo, string>(
   'acccount/deriveAccount',
-  async (l1account:string, thunkApi) => {
+  async (l1account: string, thunkApi) => {
     let derived = await deriveL2Account(l1account);
     let account = await tryLoginL2Account(derived);
     /*
@@ -70,8 +73,8 @@ export const accountSlice = createSlice({
   },
 });
 
-export const selectL1Account= (state: any) => state.account.l1Account;
-export const selectL2Account= (state: any) => state.account.l2Account;
-export const selectLoginStatus = (state: any) => state.account.status;
+export const selectL1Account = <T extends State>(state: T) => state.account.l1Account;
+export const selectL2Account = <T extends State>(state: T) => state.account.l2Account;
+export const selectLoginStatus = <T extends State>(state: T) => state.account.status;
 
 export default accountSlice.reducer;
