@@ -1,0 +1,112 @@
+import BN from "bn.js";
+import { getTokenIndex as getTokenIndexFromDeploy } from "delphinus-deployment/src/token-index";
+import { getAPI, getCryptoUtil, stringToBN } from "./api";
+import { SubstrateAccountInfo } from "../type";
+
+/* ------------ Query ------------ */
+export function compressToken(chainId: string, token: string, query = false) {
+  const chainIdString = stringToBN(chainId).toString(16, 24);
+  const tokenString = stringToBN(token, "", true).toString(16, 40);
+  return new BN(chainIdString + tokenString, 16);
+}
+
+export function getTokenIndex(chainId: string, tokenAddress: string) {
+  const gTokenAddress = compressToken(chainId, tokenAddress).toString(10);
+  return Object.entries(getTokenIndexFromDeploy()).find(
+    (x) => x[0] === gTokenAddress
+  )![1];
+}
+
+export async function querySubstrateBalance(account: string) {
+  const api = await getAPI();
+  const account_info = await api.query.system.account(account);
+  const balance = account_info.data.free.toHuman();
+  return balance;
+}
+
+export async function queryAccountIndex(accountAddress: string) {
+  const api = await getAPI();
+  const accountIndexOpt: any = await api.query.swapModule.accountIndexMap(
+    accountAddress
+  );
+  return accountIndexOpt.isNone ? "" : accountIndexOpt.value.toHex();
+}
+
+export async function queryL2Nonce(accountAddress: string) {
+  const api = await getAPI();
+  return (await api.query.swapModule.nonceMap(accountAddress)).toHex();
+}
+
+export async function queryTokenAmount(
+  l2Account: SubstrateAccountInfo,
+  chainId: string,
+  tokenAddress: string,
+  callback: (number: string) => void
+) {
+  try {
+    const api = await getAPI();
+    const accountAddress = l2Account.address;
+    const accountIndex = await queryAccountIndex(accountAddress);
+    const tokenIndex = getTokenIndex(chainId, tokenAddress);
+    const pair = [accountIndex, tokenIndex];
+    const result = await api.query.swapModule.balanceMap(pair);
+
+    callback(result.toString());
+  } catch (e: any) {
+    callback("failed:" + tokenAddress + "[" + chainId + "]");
+  }
+}
+
+export async function queryPoolAmount(
+  poolIndex: number,
+  callback: (v1: string, v2: string) => void
+) {
+  try {
+    const api = await getAPI();
+    const raw = await api.query.swapModule.poolMap(poolIndex);
+    const result = raw.toJSON() as number[];
+    callback(result[2].toString(), result[3].toString());
+  } catch (e: any) {
+    callback("failed", "failed");
+  }
+}
+
+export async function queryPoolIndex(token0: number, token1: number) {
+  const poolList = await getPoolList();
+  return poolList.find((x) => x[1] === token0 && x[2] === token1)?.[0];
+}
+
+export async function queryPoolShare(
+  l2Account: SubstrateAccountInfo,
+  poolIndex: number,
+  callback: (number: string) => void
+) {
+  try {
+    const api = await getAPI();
+    const accountAddress = l2Account.address;
+    const accountIndex = await queryAccountIndex(accountAddress);
+    const pair = [accountIndex, poolIndex];
+    const share = await api.query.swapModule.shareMap(pair);
+    callback(share.toString());
+  } catch (e: any) {
+    callback("failed");
+  }
+}
+
+let poolInfo: any[];
+
+export async function getPoolList() {
+  if (!poolInfo) {
+    const api = await getAPI();
+    const poolEntries = await api.query.swapModule.poolMap.entries();
+    poolInfo = poolEntries.map((kv) => {
+      const data = (kv[1] as any).value;
+      return [
+        kv[0].args[0].toString(),
+        data[0].toString(),
+        data[1].toString(),
+      ].map((x) => parseInt(x));
+    });
+  }
+  return poolInfo;
+}
