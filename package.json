@@ -30,6 +30,7 @@
     "delphinus-crypto": "*",
     "delphinus-deployment": "*",
     "delphinus-l2-client-helper": "*",
+    "react": "^17.0.2",
     "web3subscriber": "*"
   },
   "peerDependencies": {

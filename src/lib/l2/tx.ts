@@ -81,6 +81,10 @@ export async function withdraw(
     const accountAddress = l2Account.address;
     const tokenIndex = getTokenIndex(chainId, token);
     const accountIndex = await queryAccountIndex(accountAddress);
+    if (accountIndex === "") {
+        console.log("query index:", accountIndex);
+        throw "Account has not been activated";
+    }
     const l2nonce = await queryL2Nonce(accountAddress);
     const l1account = await queryCurrentL1Account(chainId);
     const helper = new SwapHelper(

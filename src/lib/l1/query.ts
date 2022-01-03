@@ -46,7 +46,7 @@ export async function queryTokenL1Balance(
   });
 }
 
-async function prepareMetaData() {
+export async function prepareMetaData() {
   let config = await getConfigByChainId(L1ClientRole.Wallet, WalletSnap);
   return await withL1Client(config, false, async (l1client: L1Client) => {
     let bridge = l1client.getBridgeContract();

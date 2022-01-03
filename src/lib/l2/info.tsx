@@ -41,20 +41,14 @@ export async function queryTokenAmount(
   l2Account: SubstrateAccountInfo,
   chainId: string,
   tokenAddress: string,
-  callback: (number: string) => void
 ) {
-  try {
     const api = await getAPI();
     const accountAddress = l2Account.address;
     const accountIndex = await queryAccountIndex(accountAddress);
     const tokenIndex = getTokenIndex(chainId, tokenAddress);
     const pair = [accountIndex, tokenIndex];
     const result = await api.query.swapModule.balanceMap(pair);
-
-    callback(result.toString());
-  } catch (e: any) {
-    callback("failed:" + tokenAddress + "[" + chainId + "]");
-  }
+    return result;
 }
 
 export async function queryPoolAmount(
