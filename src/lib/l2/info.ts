@@ -45,6 +45,10 @@ export async function queryTokenAmount(
     const api = await getAPI();
     const accountAddress = l2Account.address;
     const accountIndex = await queryAccountIndex(accountAddress);
+    if (accountIndex === "") {
+      return 0;
+    }
+
     const tokenIndex = getTokenIndex(chainId, tokenAddress);
     const pair = [accountIndex, tokenIndex];
     const result = await api.query.swapModule.balanceMap(pair);
@@ -79,6 +83,10 @@ export async function queryPoolShare(
     const api = await getAPI();
     const accountAddress = l2Account.address;
     const accountIndex = await queryAccountIndex(accountAddress);
+    if (accountIndex === "") {
+      return 0;
+    }
+
     const pair = [accountIndex, poolIndex];
     const share = await api.query.swapModule.shareMap(pair);
     callback(share.toString());
