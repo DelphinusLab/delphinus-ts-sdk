@@ -30,11 +30,12 @@ export async function tryLoginL2Account(account: string) {
 
   await cryptoWaitReady();
   const pair = keyring.addFromSeed(seed);
-
   const balance = await querySubstrateBalance(pair.address);
+  const accountIdx = await queryAccountIndex(pair.address);
+
   return {
     seed: seed,
-    account: pair.meta.account as string,
+    account: accountIdx,
     address: pair.address,
     injector: pair,
     balance: balance,

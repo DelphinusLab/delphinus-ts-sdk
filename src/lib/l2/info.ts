@@ -84,7 +84,7 @@ export async function queryPoolShare(
     const accountAddress = l2Account.address;
     const accountIndex = await queryAccountIndex(accountAddress);
     if (accountIndex === "") {
-      return 0;
+      callback("0");
     }
 
     const pair = [accountIndex, poolIndex];

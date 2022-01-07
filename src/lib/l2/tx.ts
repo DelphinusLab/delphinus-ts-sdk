@@ -18,6 +18,12 @@ export async function queryDepositTxStatus(tx: string) {
   return tx_status.toHex();
 }
 
+/*
+export async function checkComplete(rid: string) {
+  const codec = await api.query.swapModule.completeReqMap(rid);
+}
+*/
+
 
 /* ------------ Transaction ------------ */
 
@@ -31,23 +37,41 @@ function sendUntilFinalize(l2Account: SubstrateAccountInfo) {
     ).nonce.toNumber();
     const nonce = new BN(nonceRaw);
 
-    await new Promise(async (resolve, reject) => {
+    let req = await new Promise<[string,string]>(async (resolve, reject) => {
+      console.log("sendUntilFinalize");
+      const get_rid = (e:any) => {
+        const {event, phase } = e;
+        console.log("event get:", event.data.toString(), event.method, event.section);
+        return event.data[0];
+      }
       const unsub = await tx.signAndSend(
         l2Account.injector,
         { nonce },
         ({ events = [], status }) => {
+          //if (status.isInBlock) {
+          //  console.log(`Transaction included at blockHash ${status.asInBlock}`);
+          //};
           if (status.isFinalized) {
             unsub();
+            const suc_event = events.find((e) => {
+              const {event, phase} = e;
+              return (event.section == "swapModule");
+            });
+
             const err_event = events.find((e) =>
               api.events.system.ExtrinsicFailed.is(e.event)
             );
             err_event
               ? reject(new Error(err_event.toString()))
-              : resolve(undefined);
+              : resolve([
+                status.asFinalized.toString(),
+                get_rid(suc_event)
+              ]);
           }
         }
       );
     });
+    return req;
   };
 }
 
@@ -74,12 +98,14 @@ export async function withdraw(
   chainId: string,
   token: string,
   amount: string,
-  progress?: (m: string) => void,
+  progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
   error?: (m: string) => void
 ) {
   try {
+    console.log("withdraw:", chainId, token);
     const accountAddress = l2Account.address;
     const tokenIndex = getTokenIndex(chainId, token);
+    console.log("token index:", tokenIndex);
     const accountIndex = await queryAccountIndex(accountAddress);
     if (accountIndex === "") {
         console.log("query index:", accountIndex);
@@ -93,13 +119,18 @@ export async function withdraw(
       await getCryptoUtil()
     );
 
-    await helper.withdraw(
+    let tx = await helper.withdraw(
       stringToBN(accountIndex),
       new BN(tokenIndex),
       stringToBN(amount),
       l1account,
       stringToBN(l2nonce)
     );
+    console.log("tx finalized at:", tx);
+    if(progress) {
+      progress("transaction", "done", tx[0], 70);
+      progress("finalize", "queued", tx[1], 100);
+    }
   } catch (e: any) {
     error?.(e.toString());
   }
@@ -179,7 +210,8 @@ export async function swap(
   l2Account: SubstrateAccountInfo,
   tokenIndex0: number,
   tokenIndex1: number,
-  amountRaw: string,
+  amount0: string,
+  amount1: string,
   progress?: (m: string) => void,
   error?: (m: string) => void
 ) {
@@ -192,7 +224,7 @@ export async function swap(
     const accountAddress = l2Account.address;
     const accountIndex = await queryAccountIndex(accountAddress);
     const l2nonce = await queryL2Nonce(accountAddress);
-    const amount = stringToBN(amountRaw, "withdraw amount");
+    const amount = stringToBN(amount0, "withdraw amount");
     const helper = new SwapHelper(
       Buffer.from(l2Account.seed).toString("hex"),
       sendUntilFinalize(l2Account),

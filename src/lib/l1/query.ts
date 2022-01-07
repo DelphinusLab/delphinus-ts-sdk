@@ -46,25 +46,28 @@ export async function queryTokenL1Balance(
   });
 }
 
-export async function prepareMetaData() {
+export async function prepareMetaData(pool_list: Array<Array<number>>) {
   let config = await getConfigByChainId(L1ClientRole.Wallet, WalletSnap);
   return await withL1Client(config, false, async (l1client: L1Client) => {
     let bridge = l1client.getBridgeContract();
-    /*
-    let pool_list = await getPoolList();
+    console.log("got bridge");
     let pools = await Promise.all(
       pool_list.map(async (info) => {
         let poolidx = info[0];
+        console.log("preparing:", poolidx, info[1], info[2]);
+        try {
         let t1 = await bridge.getTokenInfo(info[1]);
         let t2 = await bridge.getTokenInfo(info[2]);
         return {
           id: poolidx,
           tokens: [t1, t2],
         };
+        } catch(e) {
+          console.log(e);
+          throw e;
+        }
       })
     );
-    */
-    let pools:Array<PoolInfo> = [];
     return {
       chainInfo: (await bridge.getMetaData()).chainInfo,
       poolInfo: pools,
@@ -72,9 +75,3 @@ export async function prepareMetaData() {
     };
   });
 }
-
-export function loadMetadata(cb: (metadata: BridgeMetadata) => void) {
-  prepareMetaData().then((meta) => cb(meta));
-}
-
-
