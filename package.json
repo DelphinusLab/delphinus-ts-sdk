@@ -1,5 +1,5 @@
 {
-  "name": "delphinus-account",
+  "name": "delphinus-ts-sdk",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
