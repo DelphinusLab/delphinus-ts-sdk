@@ -142,7 +142,7 @@ export async function supply(
   tokenIndex1: number,
   amount0: string,
   amount1: string,
-  progress?: (m: string) => void,
+  progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
   error?: (m: string) => void
 ) {
   try {
@@ -159,13 +159,18 @@ export async function supply(
       await getCryptoUtil()
     );
 
-    await helper.poolSupply(
+    let tx = await helper.poolSupply(
       stringToBN(accountIndex),
       new BN(poolIndex),
       stringToBN(amount0),
       stringToBN(amount1),
       stringToBN(l2nonce)
     );
+    console.log("tx finalized at:", tx);
+    if(progress) {
+      progress("transaction", "done", tx[0], 70);
+      progress("finalize", "queued", tx[1], 100);
+    }
   } catch (e: any) {
     error?.(e.toString());
   }
@@ -177,7 +182,7 @@ export async function retrieve(
   tokenIndex1: number,
   amount0: string,
   amount1: string,
-  progress?: (m: string) => void,
+  progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
   error?: (m: string) => void
 ) {
   try {
@@ -194,13 +199,19 @@ export async function retrieve(
       await getCryptoUtil()
     );
 
-    await helper.poolRetrieve(
+    let tx = await helper.poolRetrieve(
       stringToBN(accountIndex),
       new BN(poolIndex),
       stringToBN(amount0),
       stringToBN(amount1),
       stringToBN(l2nonce)
     );
+
+    if(progress) {
+      progress("transaction", "done", tx[0], 70);
+      progress("finalize", "queued", tx[1], 100);
+    }
+
   } catch (e: any) {
     error?.(e.toString());
   }
@@ -212,7 +223,7 @@ export async function swap(
   tokenIndex1: number,
   amount0: string,
   amount1: string,
-  progress?: (m: string) => void,
+  progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
   error?: (m: string) => void
 ) {
   try {
@@ -231,13 +242,19 @@ export async function swap(
       await getCryptoUtil()
     );
 
-    await helper.swap(
+    let tx = await helper.swap(
       stringToBN(accountIndex),
       new BN(poolIndex),
       new BN(reverse ? 1 : 0),
       amount,
       stringToBN(l2nonce)
     );
+
+    if(progress) {
+      progress("transaction", "done", tx[0], 70);
+      progress("finalize", "queued", tx[1], 100);
+    }
+
   } catch (e: any) {
     error?.(e.toString());
   }
