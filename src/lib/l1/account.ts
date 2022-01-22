@@ -1,7 +1,8 @@
-import BN from "bn.js";
-import { L1AccountInfo, SubstrateAccountInfo, BridgeMetadata } from "../type";
 import { L1Client, withL1Client } from "solidity/clients/client";
-import { DelphinusWeb3, withBrowerWeb3 } from "web3subscriber/src/client";
+import {
+  BlockChainClient,
+  withBlockchainClient,
+} from "web3subscriber/src/client";
 import { L1ClientRole } from "delphinus-deployment/src/types";
 import {
   getConfigByChainId,
@@ -9,8 +10,8 @@ import {
 } from "delphinus-deployment/src/config";
 
 export async function loginL1Account() {
-  return await withBrowerWeb3(async (web3: DelphinusWeb3) => {
-    let i = await web3.getAccountInfo();
+  return await withBlockchainClient(true, async (client: BlockChainClient) => {
+    let i = await client.getAccountInfo();
     return i;
   });
 }
