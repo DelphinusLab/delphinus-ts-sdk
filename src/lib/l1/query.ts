@@ -1,7 +1,6 @@
 import BN from "bn.js";
-import { PoolInfo, L1AccountInfo, SubstrateAccountInfo, BridgeMetadata } from "../type";
+import { L1AccountInfo, BridgeMetadata } from "../type";
 import { L1Client, withL1Client } from "solidity/clients/client";
-import { DelphinusWeb3, withBrowerWeb3 } from "web3subscriber/src/client";
 import {
   getConfigByChainId,
   WalletSnap,
@@ -56,13 +55,13 @@ export async function prepareMetaData(pool_list: Array<Array<number>>) {
         let poolidx = info[0];
         console.log("preparing:", poolidx, info[1], info[2]);
         try {
-        let t1 = await bridge.getTokenInfo(info[1]);
-        let t2 = await bridge.getTokenInfo(info[2]);
-        return {
-          id: poolidx,
-          tokens: [t1, t2],
-        };
-        } catch(e) {
+          let t1 = await bridge.getTokenInfo(info[1]);
+          let t2 = await bridge.getTokenInfo(info[2]);
+          return {
+            id: poolidx,
+            tokens: [t1, t2],
+          };
+        } catch (e) {
           console.log(e);
           throw e;
         }
