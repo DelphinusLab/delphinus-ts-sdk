@@ -5,8 +5,10 @@ import {
 
 export async function loginL1Account() {
   return await withBlockchainClient(async (client: BlockChainClient) => {
-    let i = await client.getAccountInfo();
-    return i;
+    return {
+      address: await client.getAccountInfo(),
+      chainId: await (await client.getChainID()).toString(),
+    };
   });
 }
 

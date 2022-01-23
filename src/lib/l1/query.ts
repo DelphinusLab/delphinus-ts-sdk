@@ -1,10 +1,6 @@
 import BN from "bn.js";
 import { L1AccountInfo, BridgeMetadata } from "../type";
-import {
-  L1Client,
-  withL1Client,
-  withL1Connection,
-} from "solidity/clients/client";
+import { withL1Connection } from "solidity/clients/client";
 import {
   getConfigByChainId,
   WalletSnap,
@@ -32,14 +28,10 @@ function hexcmp(x: string, y: string) {
   return xx.eq(yy);
 }
 
-export async function queryCurrentL1Account(chainId: string) {
-  return await withL1Client(
-    await getConfigByChainId(L1ClientRole.Wallet, chainId),
-    true,
-    async (l1client: L1Client) => {
-      return l1client.encodeL1Address(l1client.getDefaultAccount());
-    }
-  );
+export async function queryCurrentL1Account(_chainId: string) {
+  return await withL1Connection(async (l1Client: BlockChainClient) => {
+    return l1Client.encodeL1Address(await l1Client.getAccountInfo());
+  });
 }
 
 export async function queryTokenL1Balance(
