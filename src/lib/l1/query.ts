@@ -1,12 +1,16 @@
 import BN from "bn.js";
-import { PoolInfo, L1AccountInfo, SubstrateAccountInfo, BridgeMetadata } from "../type";
-import { L1Client, withL1Client } from "solidity/clients/client";
-import { DelphinusWeb3, withBrowerWeb3 } from "web3subscriber/src/client";
+import { L1AccountInfo, BridgeMetadata } from "../type";
+import { withL1Connection } from "solidity/clients/client";
 import {
   getConfigByChainId,
   WalletSnap,
 } from "delphinus-deployment/src/config";
 import { L1ClientRole } from "delphinus-deployment/src/types";
+import { BlockChainClient } from "web3subscriber/src/client";
+import { getTokenContractConnection } from "solidity/clients/contracts/token";
+import { getBridgeContractConnection } from "solidity/clients/contracts/bridge";
+import { decodeL1address } from "web3subscriber/src/addresses";
+import { Chains, Tokens } from "solidity/clients/contracts/tokenlist";
 
 export function getTokenIndex(
   metadata: BridgeMetadata,
@@ -18,14 +22,16 @@ export function getTokenIndex(
   return token!.index;
 }
 
-export async function queryCurrentL1Account(chainId: string) {
-  return await withL1Client(
-    await getConfigByChainId(L1ClientRole.Wallet, chainId),
-    true,
-    async (l1client: L1Client) => {
-      return l1client.encodeL1Address(l1client.getDefaultAccount());
-    }
-  );
+function hexcmp(x: string, y: string) {
+  const xx = new BN(x, "hex");
+  const yy = new BN(y, "hex");
+  return xx.eq(yy);
+}
+
+export async function queryCurrentL1Account(_chainId: string) {
+  return await withL1Connection(async (l1Client: BlockChainClient) => {
+    return l1Client.encodeL1Address(await l1Client.getAccountInfo());
+  });
 }
 
 export async function queryTokenL1Balance(
@@ -33,45 +39,54 @@ export async function queryTokenL1Balance(
   tokenAddress: string,
   l1Account: L1AccountInfo
 ) {
-  let config = await getConfigByChainId(L1ClientRole.Wallet, chainId);
-  return withL1Client(config, false, async (l1client: L1Client) => {
-    let token = l1client.getTokenContract(
-      new BN(tokenAddress, 16).toString(16, 20),
-      l1Account.address
-    );
-    console.log("nid is", await l1client.web3.web3Instance.eth.net.getId());
-    console.log("token is", token);
-    let balance = await token.balanceOf(l1Account.address);
-    return balance;
-  });
+  return await withL1Connection(async (l1Client: BlockChainClient) => {
+    let token = await getTokenContractConnection(l1Client, tokenAddress);
+    let balance: BN = await token.balanceOf(l1Account.address);
+    return balance.toString(10);
+  }, await getConfigByChainId(L1ClientRole.Wallet, chainId));
 }
 
 export async function prepareMetaData(pool_list: Array<Array<number>>) {
-  let config = await getConfigByChainId(L1ClientRole.Wallet, WalletSnap);
-  return await withL1Client(config, false, async (l1client: L1Client) => {
-    let bridge = l1client.getBridgeContract();
-    console.log("got bridge");
-    let pools = await Promise.all(
+  const config = await getConfigByChainId(L1ClientRole.Wallet, WalletSnap);
+  const wrapTokenInfo = (idx: number, token: any) => {
+    const uid: BN = token.token_uid;
+    console.log(uid);
+    const [cid, addr] = decodeL1address(uid.toString());
+    return {
+      tokenAddress: addr,
+      tokenName:
+        Tokens.find((x: any) => hexcmp(x.address, addr) && x.chainId == cid)
+          ?.name || "unknown",
+      chainName: Chains[cid],
+      chainId: cid,
+      index: idx,
+    };
+  };
+
+  return await withL1Connection(async (l1Client: BlockChainClient) => {
+    const bridge = await getBridgeContractConnection(l1Client);
+    const pools = await Promise.all(
       pool_list.map(async (info) => {
-        let poolidx = info[0];
+        const poolidx = info[0];
         console.log("preparing:", poolidx, info[1], info[2]);
         try {
-        let t1 = await bridge.getTokenInfo(info[1]);
-        let t2 = await bridge.getTokenInfo(info[2]);
-        return {
-          id: poolidx,
-          tokens: [t1, t2],
-        };
-        } catch(e) {
+          const tokens = await bridge.allTokens();
+          const t1 = tokens[info[1]];
+          const t2 = tokens[info[2]];
+          return {
+            id: poolidx,
+            tokens: [wrapTokenInfo(info[1], t1), wrapTokenInfo(info[2], t2)],
+          };
+        } catch (e) {
           console.log(e);
           throw e;
         }
       })
     );
     return {
-      chainInfo: (await bridge.getMetaData()).chainInfo,
+      chainInfo: await bridge.chainInfo(),
       poolInfo: pools,
       snap: WalletSnap,
     };
-  });
+  }, config);
 }

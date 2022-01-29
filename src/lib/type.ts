@@ -12,7 +12,7 @@ export interface L1AccountInfo {
   address: string;
   chainId: string;
   //chainName: string;
-  web3: any;
+  // web3: any;
 }
 
 /*
