@@ -3,6 +3,8 @@ import { withL1Connection } from "solidity/clients/client";
 import { BlockChainClient } from "web3subscriber/src/client";
 import { getTokenContractConnection } from "solidity/clients/contracts/token";
 import { getBridgeContractConnection } from "solidity/clients/contracts/bridge";
+import { getConfigByChainId } from "delphinus-deployment/src/config";
+import { L1ClientRole } from "delphinus-deployment/src/types";
 
 const ss58 = require("substrate-ss58");
 
@@ -69,5 +71,5 @@ export async function deposit(
     } catch (e: any) {
       error(e.message);
     }
-  });
+  }, true, await getConfigByChainId(L1ClientRole.Wallet, chainId));
 }

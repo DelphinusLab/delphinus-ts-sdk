@@ -28,10 +28,10 @@ function hexcmp(x: string, y: string) {
   return xx.eq(yy);
 }
 
-export async function queryCurrentL1Account(_chainId: string) {
+export async function queryCurrentL1Account(chainId: string) {
   return await withL1Connection(async (l1Client: BlockChainClient) => {
     return l1Client.encodeL1Address(await l1Client.getAccountInfo());
-  });
+  }, true, await getConfigByChainId(L1ClientRole.Wallet, chainId));
 }
 
 export async function queryTokenL1Balance(
@@ -43,7 +43,7 @@ export async function queryTokenL1Balance(
     let token = await getTokenContractConnection(l1Client, tokenAddress);
     let balance: BN = await token.balanceOf(l1Account.address);
     return balance.toString(10);
-  }, await getConfigByChainId(L1ClientRole.Wallet, chainId));
+  }, false, await getConfigByChainId(L1ClientRole.Wallet, chainId));
 }
 
 export async function prepareMetaData(pool_list: Array<Array<number>>) {
@@ -88,5 +88,5 @@ export async function prepareMetaData(pool_list: Array<Array<number>>) {
       poolInfo: pools,
       snap: WalletSnap,
     };
-  }, config);
+  }, false, config);
 }

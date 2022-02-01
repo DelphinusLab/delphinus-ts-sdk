@@ -9,7 +9,7 @@ export async function loginL1Account() {
       address: await client.getAccountInfo(),
       chainId: await (await client.getChainID()).toString(),
     };
-  });
+  }, true);
 }
 
 export async function deriveL2Account(l1Account: string) {
@@ -19,7 +19,8 @@ export async function deriveL2Account(l1Account: string) {
         "Sign this message to derive Delphinus L2 account, do not expose the signature to other.",
         l1Account,
       ]);
-    }
+    },
+    true
   );
   return sign.result;
 }
