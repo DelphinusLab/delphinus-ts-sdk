@@ -6,6 +6,10 @@ import { L1ClientRole } from "delphinus-deployment/src/types";
 
 const ss58 = require("substrate-ss58");
 
+function timeout(ms:number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function deposit(
   l2Account: SubstrateAccountInfo,
   chainId: string,
@@ -31,6 +35,7 @@ export async function deposit(
           parseInt(amount),
           token_id
         );
+        let l1_txhash = "";
         r.when("snapshot", "Approve", () =>
           progress("approve", "Wait confirm ...", "", 10)
         )
@@ -43,30 +48,36 @@ export async function deposit(
         .when("snapshot", "Deposit", () =>
           progress("deposit", "Wait confirm ...", "", 40)
         )
-        .when("Deposit", "transactionHash", (tx: string) =>
+        .when("Deposit", "transactionHash", (tx: string) => {
+          l1_txhash = tx;
           progress("desposit", "Transaction Sent", tx, 50)
-        )
+        })
         .when("Deposit", "receipt", (tx: any) =>
           progress("deposit", "Done", tx.blockHash, 70)
         );
         let tx = await r;
         console.log(tx);
         const p = async () => {
-          let tx_status = await querying(tx.transactionHash);
-          //FIXME: tx_status:Codec should be parsed to number
+          //Querying the l2 tx status of l1 depopsit
+          let tx_status = await querying(l1_txhash);
           console.log("tx_status", tx_status);
           if (tx_status === "0x00") {
             progress("finalize", "Waiting L2", "", 80);
-            await setTimeout(() => {}, 1000);
+            await timeout(5000);
             await p();
           } else if (tx_status === "0x01") {
             //FIXME: we need to put the receipt status into a list for further querying
-            progress("finalize", "Waiting L2", "", 100);
+            progress("finalize", "Done", "", 100);
             return;
           } else if (tx_status === "0x02") {
             progress("finalize", "Done", "", 100);
             return;
-          } else throw "Unexpected TxStatus";
+          } else {
+            console.log("waiting for tx status ...");
+            await timeout(5000);
+            await p();
+            //throw "Unexpected TxStatus";
+          }
         };
         await p();
       } catch (e: any) {

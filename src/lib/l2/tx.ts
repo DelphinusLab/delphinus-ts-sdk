@@ -14,7 +14,10 @@ import { getTokenIndex } from "./info";
 
 export async function queryDepositTxStatus(tx: string) {
   const api = await getAPI();
-  const tx_status = await api.query.swapModule.depositMap(tx);
+  const tx_status  = await api.query.swapModule.l1TxMap(tx);
+  //const tx_status = await api.query.swapModule.depositMap(rid);
+  //console.log(`queryDepositTxStatus: [tx:${tx}], [rid:${rid}], [status:${tx_status}].`);
+  console.log(`queryDepositTxStatus: [tx:${tx}], [status:${tx_status}].`);
   return tx_status.toHex();
 }
 
