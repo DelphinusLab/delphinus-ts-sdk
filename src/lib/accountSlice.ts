@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { SubstrateAccountInfo, L1AccountInfo } from './type';
 import { loginL1Account, deriveL2Account } from "./l1/account";
-import { tryLoginL2Account } from "./l2/utils";
+import { tryLoginL2Account, register } from "./l2/utils";
+import { queryAccountIndex } from "./l2/info";
 
 export interface AccountState {
   l1Account?: L1AccountInfo;
@@ -44,6 +45,22 @@ export const loginL2AccountAsync = createAsyncThunk<SubstrateAccountInfo, string
   }
 );
 
+export const registerL2AccountAsync = createAsyncThunk<SubstrateAccountInfo, SubstrateAccountInfo>(
+  'acccount/registerAccount',
+  async (l2account: SubstrateAccountInfo, thunkApi) => {
+    /*
+    await withBrowerWeb3(async (web3: DelphinusWeb3) => {
+      return (web3 as Web3BrowsersMode).subscribeAccountChange(cb);
+    });
+    */
+    await register(l2account);
+    let index = await queryAccountIndex(l2account.address);
+    let account = {...l2account, account:index};
+    return account;
+  }
+);
+
+
 export const accountSlice = createSlice({
   name: 'account',
   initialState,
@@ -64,6 +81,11 @@ export const accountSlice = createSlice({
       })
       .addCase(loginL2AccountAsync.pending, (state) => {
         state.status = 'Loading';
+      })
+      .addCase(registerL2AccountAsync.fulfilled, (state, c) => {
+        state.status = 'Ready';
+        console.log(c);
+        state.l2Account = c.payload;
       })
       .addCase(loginL2AccountAsync.fulfilled, (state, c) => {
         state.status = 'Ready';

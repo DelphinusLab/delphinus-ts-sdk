@@ -25,7 +25,7 @@ export async function deriveL2Account(l1Account: string) {
           {
             method: "personal_sign",
             params: [
-              "Sign this message to derive Delphinus L2 account, do not expose the signature to other.",
+              "Sign this message to derive a CrossChain L2 account, do not expose the signature to other.",
               l1Account,
             ],
             from: l1Account,
