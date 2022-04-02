@@ -88,3 +88,36 @@ export async function deposit(
 }
 
 
+export async function faucet(
+  chainId: string,
+  tokenAddress: string, // hex without 0x prefix
+  amount: string,
+  progress: (s: string, h: string, r: string, ratio: number) => void,
+  error: (m: string) => void,
+) {
+  console.log("call deposit", chainId, tokenAddress, amount);
+  await withL1Client(
+    await getConfigByChainId(L1ClientRole.Wallet, chainId),
+    true,
+    async (l1client: L1Client) => {
+      try {
+        let token_address = "0x" + tokenAddress;
+        let tokenContract = l1client.getTokenContract(token_address);
+        let r = tokenContract.mint(
+          parseInt(amount),
+        );
+        let l1_txhash = "";
+        r.when("Mint", "transactionHash", (tx: string) =>
+          progress("mint", "Transaction Sent", tx, 20)
+        )
+        .when("Mint", "receipt", (tx: any) =>
+          progress("mint", "Done", tx.blockHash, 100)
+        )
+        let tx = await r;
+      } catch (e: any) {
+        error(e.message);
+      }
+    }
+  );
+}
+
