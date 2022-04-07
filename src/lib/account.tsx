@@ -58,7 +58,7 @@ export const TxDialogTitle = (props: DialogTitleProps) => {
   const { children, ...other } = props;
 
   return (
-    <DialogTitle sx={{ mx: 5, my: 3 }} {...other}>
+    <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
       {children}
     </DialogTitle>
   );
@@ -67,7 +67,9 @@ export const TxDialogTitle = (props: DialogTitleProps) => {
 // href="https://metamask.io/download"
 
 interface IProps {
-  name: string;
+  name?: string;
+  logoSVG?: string;
+  useCustomStyles?: boolean;
   children?: any;
 }
 
@@ -81,47 +83,81 @@ export function SetAccount(props: IProps) {
   const status = useSelector<State, string>(selectLoginStatus);
   const dispatch = useDispatch<(_: AsyncThunkAction<any, any, {}>) => void>();
 
+  const ButtonGroup = () => {
+    return (
+      <>
+        {l1Account === undefined && (
+          <Button
+            className="home-btn"
+            startIcon={
+              !props.useCustomStyles && (
+                <img src={MetaMaskLogo} className="chain-icon"></img>
+              )
+            }
+            variant="contained"
+            onClick={() => dispatch(loginL1AccountAsync())}
+          >
+            Connect Wallet
+          </Button>
+        )}
+        {l1Account && (
+          <Button
+            startIcon={
+              !props.useCustomStyles && (
+                <img src={MetaMaskLogo} className="chain-icon"></img>
+              )
+            }
+            className="home-btn"
+            variant="contained"
+            disabled
+          >
+            <Address address={l1Account!.address}></Address>
+          </Button>
+        )}
+        {
+          <Button
+            disabled={l1Account === undefined}
+            startIcon={
+              !props.useCustomStyles && (
+                <img src={MetaMaskLogo} className="chain-icon"></img>
+              )
+            }
+            className="home-btn"
+            variant="contained"
+            onClick={() =>
+              l1Account && dispatch(loginL2AccountAsync(l1Account.address))
+            }
+          >
+            Sign In
+          </Button>
+        }
+      </>
+    );
+  };
+
   return (
     <TxDialog
       open={status !== "Ready"}
       aria-labelledby="customized-dialog-title"
     >
-      <TxDialogTitle id="customized-dialog-title">
+      {props.useCustomStyles && props.logoSVG && (
         <div className="home-title">
-          <img src={props.name} className="home-logo"></img>
+          <img src={props.logoSVG} className="home-logo"></img>
         </div>
-      </TxDialogTitle>
+      )}
+      {!props.useCustomStyles && (
+        <TxDialogTitle id="customized-dialog-title">{props.name}</TxDialogTitle>
+      )}
+
       <DialogContent>
         {props.children}
         <DialogActions>
-          <div className="home-btn-wrapper">
-            {l1Account === undefined && (
-              <Button
-                className="home-btn"
-                variant="contained"
-                onClick={() => dispatch(loginL1AccountAsync())}
-              >
-                Connect Wallet
-              </Button>
-            )}
-            {l1Account && (
-              <Button className="home-btn" variant="contained" disabled>
-                <Address address={l1Account!.address}></Address>
-              </Button>
-            )}
-            {
-              <Button
-                disabled={l1Account === undefined}
-                className="home-btn"
-                variant="contained"
-                onClick={() =>
-                  l1Account && dispatch(loginL2AccountAsync(l1Account.address))
-                }
-              >
-                Sign In
-              </Button>
-            }
-          </div>
+          {props.useCustomStyles && (
+            <div className="home-btn-wrapper">
+              <ButtonGroup></ButtonGroup>
+            </div>
+          )}
+          {!props.useCustomStyles && <ButtonGroup></ButtonGroup>}
         </DialogActions>
       </DialogContent>
     </TxDialog>
