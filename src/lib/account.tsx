@@ -1,16 +1,16 @@
 /* eslint-disable jsx-a11y/alt-text */
-import React from 'react';
+import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Modal from "@mui/material/Modal";
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import { SxProps, Theme } from "@mui/material/styles";
-import { styled } from '@mui/material/styles';
+import { styled } from "@mui/material/styles";
 
 import MetaMaskLogo from "../icons/metamask.svg";
 import PolkaLogo from "../icons/polka.svg";
@@ -41,10 +41,10 @@ const style: SxProps<Theme> = {
 };
 
 export const TxDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialogContent-root': {
+  "& .MuiDialogContent-root": {
     padding: theme.spacing(2),
   },
-  '& .MuiDialogActions-root': {
+  "& .MuiDialogActions-root": {
     padding: theme.spacing(1),
   },
 }));
@@ -64,13 +64,13 @@ export const TxDialogTitle = (props: DialogTitleProps) => {
   );
 };
 
-
-
 // href="https://metamask.io/download"
 
 interface IProps {
-  name: string;
-  children: any;
+  name?: string;
+  logoSVG?: string;
+  useCustomStyles?: boolean;
+  children?: any;
 }
 
 export function SetAccount(props: IProps) {
@@ -83,47 +83,81 @@ export function SetAccount(props: IProps) {
   const status = useSelector<State, string>(selectLoginStatus);
   const dispatch = useDispatch<(_: AsyncThunkAction<any, any, {}>) => void>();
 
+  const ButtonGroup = () => {
+    return (
+      <>
+        {l1Account === undefined && (
+          <Button
+            className="home-btn"
+            startIcon={
+              !props.useCustomStyles && (
+                <img src={MetaMaskLogo} className="chain-icon"></img>
+              )
+            }
+            variant="contained"
+            onClick={() => dispatch(loginL1AccountAsync())}
+          >
+            Connect Wallet
+          </Button>
+        )}
+        {l1Account && (
+          <Button
+            startIcon={
+              !props.useCustomStyles && (
+                <img src={MetaMaskLogo} className="chain-icon"></img>
+              )
+            }
+            className="home-btn"
+            variant="contained"
+            disabled
+          >
+            <Address address={l1Account!.address}></Address>
+          </Button>
+        )}
+        {
+          <Button
+            disabled={l1Account === undefined}
+            startIcon={
+              !props.useCustomStyles && (
+                <img src={MetaMaskLogo} className="chain-icon"></img>
+              )
+            }
+            className="home-btn"
+            variant="contained"
+            onClick={() =>
+              l1Account && dispatch(loginL2AccountAsync(l1Account.address))
+            }
+          >
+            Sign In
+          </Button>
+        }
+      </>
+    );
+  };
+
   return (
     <TxDialog
       open={status !== "Ready"}
       aria-labelledby="customized-dialog-title"
     >
-      <TxDialogTitle id="customized-dialog-title" >
-        {props.name}
-      </TxDialogTitle>
+      {props.useCustomStyles && props.logoSVG && (
+        <div className="home-title">
+          <img src={props.logoSVG} className="home-logo"></img>
+        </div>
+      )}
+      {!props.useCustomStyles && (
+        <TxDialogTitle id="customized-dialog-title">{props.name}</TxDialogTitle>
+      )}
+
       <DialogContent>
         {props.children}
         <DialogActions>
-          {l1Account === undefined && (
-            <Button
-              startIcon={<img src={MetaMaskLogo} className="chain-icon"></img>}
-              variant="contained"
-              onClick={() => dispatch(loginL1AccountAsync())}
-            >
-              Connect Wallet
-            </Button>
+          {props.useCustomStyles && (
+            <div className="home-btn-wrapper">
+              <ButtonGroup></ButtonGroup>
+            </div>
           )}
-          {l1Account && (
-            <Button
-              startIcon={<img src={MetaMaskLogo} className="chain-icon"></img>}
-              variant="contained"
-              disabled
-            >
-              <Address address={l1Account!.address}></Address>
-            </Button>
-          )}
-          {
-            <Button
-              disabled={l1Account === undefined}
-              startIcon={<img src={PolkaLogo} className="chain-icon"></img>}
-              variant="contained"
-              onClick={() =>
-                l1Account && dispatch(loginL2AccountAsync(l1Account.address))
-              }
-            >
-              Sign In
-            </Button>
-          }
+          {!props.useCustomStyles && <ButtonGroup></ButtonGroup>}
         </DialogActions>
       </DialogContent>
     </TxDialog>
