@@ -37,7 +37,9 @@ export async function deposit(
         );
 
         let l1_txhash = "";
-        r.when("snapshot", "Approve", () => console.log("SNAPSHOTAPPROVE"))
+        r.when("snapshot", "Approve", () =>
+          progress("approve", "Wait confirm ...", "", 10)
+        )
           .when("Approve", "transactionHash", (tx: string) =>
             progress("approve", "Transaction Sent", tx, 20)
           )
