@@ -3,6 +3,7 @@ import { SubstrateAccountInfo} from "../type";
 import { L1Client, withL1Client } from "solidity/clients/client";
 import { getConfigByChainId } from "delphinus-deployment/src/config";
 import { L1ClientRole } from "delphinus-deployment/src/types";
+import { PromiseBinder } from "web3subscriber/src/pbinder";
 
 const ss58 = require("substrate-ss58");
 
@@ -103,9 +104,14 @@ export async function faucet(
       try {
         let token_address = "0x" + tokenAddress;
         let tokenContract = l1client.getTokenContract(token_address);
-        let r = tokenContract.mint(
-          parseInt(amount),
-        );
+        let pbinder = new PromiseBinder();
+        let r = pbinder.return(async () => {
+          return await pbinder.bind(
+            "Mint",
+            tokenContract.mint(parseInt(amount))
+          );
+        });
+
         let l1_txhash = "";
         r.when("Mint", "transactionHash", (tx: string) =>
           progress("mint", "Transaction Sent", tx, 20)
