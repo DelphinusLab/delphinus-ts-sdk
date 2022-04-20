@@ -70,6 +70,7 @@ interface IProps {
   name?: string;
   logoSVG?: string;
   useCustomStyles?: boolean;
+  ignoreButtonIcon?: boolean;
   children?: any;
 }
 
@@ -90,7 +91,7 @@ export function SetAccount(props: IProps) {
           <Button
             className="home-btn"
             startIcon={
-              !props.useCustomStyles && (
+              !props.ignoreButtonIcon && (
                 <img src={MetaMaskLogo} className="chain-icon"></img>
               )
             }
@@ -103,7 +104,7 @@ export function SetAccount(props: IProps) {
         {l1Account && (
           <Button
             startIcon={
-              !props.useCustomStyles && (
+              !props.ignoreButtonIcon && (
                 <img src={MetaMaskLogo} className="chain-icon"></img>
               )
             }
@@ -118,8 +119,8 @@ export function SetAccount(props: IProps) {
           <Button
             disabled={l1Account === undefined}
             startIcon={
-              !props.useCustomStyles && (
-                <img src={MetaMaskLogo} className="chain-icon"></img>
+              !props.ignoreButtonIcon && (
+                <img src={PolkaLogo} className="chain-icon"></img>
               )
             }
             className="home-btn"
@@ -140,17 +141,19 @@ export function SetAccount(props: IProps) {
       open={status !== "Ready"}
       aria-labelledby="customized-dialog-title"
     >
+      {props.name && (
+        <TxDialogTitle id="customized-dialog-title">{props.name}</TxDialogTitle>
+      )}
       {props.useCustomStyles && props.logoSVG && (
         <div className="home-title">
           <img src={props.logoSVG} className="home-logo"></img>
         </div>
       )}
-      {!props.useCustomStyles && (
-        <TxDialogTitle id="customized-dialog-title">{props.name}</TxDialogTitle>
-      )}
 
       <DialogContent>
-        {props.children}
+        {props.children && (
+          <div className="home-children">{props.children}</div>
+        )}
         <DialogActions>
           {props.useCustomStyles && (
             <div className="home-btn-wrapper">
