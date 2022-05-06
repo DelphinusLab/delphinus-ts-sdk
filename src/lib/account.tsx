@@ -67,14 +67,19 @@ export const TxDialogTitle = (props: DialogTitleProps) => {
 // href="https://metamask.io/download"
 
 interface IProps {
+  client?: string;
   name?: string;
   logoSVG?: string;
   useCustomStyles?: boolean;
   ignoreButtonIcon?: boolean;
+  l2Icon?: string;
+  l2Text?: string;
   children?: any;
+  onClose?: () => void;
 }
 
 export function SetAccount(props: IProps) {
+  const { client, l2Icon, l2Text } = props;
   const l1Account = useSelector<State, L1AccountInfo | undefined>(
     selectL1Account
   );
@@ -98,7 +103,7 @@ export function SetAccount(props: IProps) {
             variant="contained"
             onClick={() => dispatch(loginL1AccountAsync())}
           >
-            Connect Wallet
+            Connect Metamask Wallet
           </Button>
         )}
         {l1Account && (
@@ -120,7 +125,10 @@ export function SetAccount(props: IProps) {
             disabled={l1Account === undefined}
             startIcon={
               !props.ignoreButtonIcon && (
-                <img src={PolkaLogo} className="chain-icon"></img>
+                <img
+                  src={l2Icon ? l2Icon : PolkaLogo}
+                  className="chain-icon"
+                ></img>
               )
             }
             className="home-btn"
@@ -129,7 +137,7 @@ export function SetAccount(props: IProps) {
               l1Account && dispatch(loginL2AccountAsync(l1Account.address))
             }
           >
-            Sign In
+            {l2Text ? l2Text : "Connect L2 Wallet"}
           </Button>
         }
       </>
@@ -137,32 +145,71 @@ export function SetAccount(props: IProps) {
   };
 
   return (
-    <TxDialog
-      open={status !== "Ready"}
-      aria-labelledby="customized-dialog-title"
-    >
-      {props.name && (
-        <TxDialogTitle id="customized-dialog-title">{props.name}</TxDialogTitle>
-      )}
-      {props.useCustomStyles && props.logoSVG && (
-        <div className="home-title">
-          <img src={props.logoSVG} className="home-logo"></img>
-        </div>
-      )}
-
-      <DialogContent>
-        {props.children && (
-          <div className="home-children">{props.children}</div>
-        )}
-        <DialogActions>
-          {props.useCustomStyles && (
-            <div className="home-btn-wrapper">
-              <ButtonGroup></ButtonGroup>
+    <>
+      {!client && (
+        <TxDialog
+          open={status !== "Ready"}
+          aria-labelledby="customized-dialog-title"
+          onClose={props.onClose}
+        >
+          {props.name && (
+            <TxDialogTitle id="customized-dialog-title">
+              {props.name}
+            </TxDialogTitle>
+          )}
+          {props.useCustomStyles && props.logoSVG && (
+            <div className="home-title">
+              <img src={props.logoSVG} className="home-logo"></img>
             </div>
           )}
-          {!props.useCustomStyles && <ButtonGroup></ButtonGroup>}
-        </DialogActions>
-      </DialogContent>
-    </TxDialog>
+
+          <DialogContent>
+            {props.children && (
+              <div className="home-children">{props.children}</div>
+            )}
+            <DialogActions>
+              {props.useCustomStyles && (
+                <div className="home-btn-wrapper">
+                  <ButtonGroup></ButtonGroup>
+                </div>
+              )}
+              {!props.useCustomStyles && <ButtonGroup></ButtonGroup>}
+            </DialogActions>
+          </DialogContent>
+        </TxDialog>
+      )}
+      {client === "rio" && (
+        <TxDialog
+          open={status !== "Ready"}
+          aria-labelledby="customized-dialog-title"
+          onClose={props.onClose}
+        >
+          {props.name && (
+            <TxDialogTitle id="customized-dialog-title">
+              {props.name}
+            </TxDialogTitle>
+          )}
+          {props.useCustomStyles && props.logoSVG && (
+            <div className="home-title">
+              <img src={props.logoSVG} className="home-logo"></img>
+            </div>
+          )}
+
+          <DialogContent>
+            {props.children && (
+              <div className="home-children">{props.children}</div>
+            )}
+            <DialogActions>
+              {props.useCustomStyles && (
+                <div className="home-btn-wrapper">
+                  <ButtonGroup></ButtonGroup>
+                </div>
+              )}
+              {!props.useCustomStyles && <ButtonGroup></ButtonGroup>}
+            </DialogActions>
+          </DialogContent>
+        </TxDialog>
+      )}
+    </>
   );
 }
