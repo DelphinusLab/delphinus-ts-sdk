@@ -12,8 +12,6 @@ import DialogActions from "@mui/material/DialogActions";
 import { SxProps, Theme } from "@mui/material/styles";
 import { styled } from "@mui/material/styles";
 
-import MetaMaskLogo from "../icons/metamask.svg";
-import PolkaLogo from "../icons/polka.svg";
 import Address from "./address";
 import { State } from "./accountSlice";
 
@@ -105,7 +103,7 @@ export function SetAccount(props: IProps) {
             startIcon={
               !button1Props?.ignoreButtonIcon && (
                 <img
-                  src={button1Props?.icon ? button1Props?.icon : MetaMaskLogo}
+                  src={button1Props?.icon ? button1Props?.icon : undefined}
                   className="chain-icon"
                 ></img>
               )
@@ -121,7 +119,7 @@ export function SetAccount(props: IProps) {
             startIcon={
               !button1Props?.ignoreButtonIcon && (
                 <img
-                  src={button1Props?.icon ? button1Props?.icon : MetaMaskLogo}
+                  src={button1Props?.icon ? button1Props?.icon : undefined}
                   className="chain-icon"
                 ></img>
               )
@@ -141,7 +139,7 @@ export function SetAccount(props: IProps) {
             startIcon={
               !button2Props?.ignoreButtonIcon && (
                 <img
-                  src={button2Props?.icon ? button2Props?.icon : PolkaLogo}
+                  src={button2Props?.icon ? button2Props?.icon : undefined}
                   className="chain-icon"
                 ></img>
               )
