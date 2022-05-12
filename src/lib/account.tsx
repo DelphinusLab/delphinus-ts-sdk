@@ -12,8 +12,6 @@ import DialogActions from "@mui/material/DialogActions";
 import { SxProps, Theme } from "@mui/material/styles";
 import { styled } from "@mui/material/styles";
 
-import MetaMaskLogo from "../icons/metamask.svg";
-import PolkaLogo from "../icons/polka.svg";
 import Address from "./address";
 import { State } from "./accountSlice";
 
@@ -66,15 +64,27 @@ export const TxDialogTitle = (props: DialogTitleProps) => {
 
 // href="https://metamask.io/download"
 
-interface IProps {
-  name?: string;
-  logoSVG?: string;
-  useCustomStyles?: boolean;
-  ignoreButtonIcon?: boolean;
+export interface ButtonProps {
+  text?: string;
+  icon?: string;
+  hidden?: boolean;
+  style?: React.CSSProperties;
   children?: any;
+  ignoreButtonIcon?: boolean;
+}
+
+interface IProps {
+  button1Props?: ButtonProps;
+  button2Props?: ButtonProps;
+  name?: string;
+  logo?: string;
+  useCustomStyles?: boolean;
+  children?: any;
+  onClose?: () => void;
 }
 
 export function SetAccount(props: IProps) {
+  const { button1Props, button2Props } = props;
   const l1Account = useSelector<State, L1AccountInfo | undefined>(
     selectL1Account
   );
@@ -91,21 +101,27 @@ export function SetAccount(props: IProps) {
           <Button
             className="home-btn"
             startIcon={
-              !props.ignoreButtonIcon && (
-                <img src={MetaMaskLogo} className="chain-icon"></img>
+              !button1Props?.ignoreButtonIcon && (
+                <img
+                  src={button1Props?.icon ? button1Props?.icon : undefined}
+                  className="chain-icon"
+                ></img>
               )
             }
             variant="contained"
             onClick={() => dispatch(loginL1AccountAsync())}
           >
-            Connect Wallet
+            {button1Props?.text ? button1Props?.text : "Connect Wallet"}
           </Button>
         )}
         {l1Account && (
           <Button
             startIcon={
-              !props.ignoreButtonIcon && (
-                <img src={MetaMaskLogo} className="chain-icon"></img>
+              !button1Props?.ignoreButtonIcon && (
+                <img
+                  src={button1Props?.icon ? button1Props?.icon : undefined}
+                  className="chain-icon"
+                ></img>
               )
             }
             className="home-btn"
@@ -113,14 +129,19 @@ export function SetAccount(props: IProps) {
             disabled
           >
             <Address address={l1Account!.address}></Address>
+            {button1Props?.children ? button1Props.children : null}
           </Button>
         )}
-        {
+        {!button2Props?.hidden && (
           <Button
+            style={button2Props?.style}
             disabled={l1Account === undefined}
             startIcon={
-              !props.ignoreButtonIcon && (
-                <img src={PolkaLogo} className="chain-icon"></img>
+              !button2Props?.ignoreButtonIcon && (
+                <img
+                  src={button2Props?.icon ? button2Props?.icon : undefined}
+                  className="chain-icon"
+                ></img>
               )
             }
             className="home-btn"
@@ -129,9 +150,9 @@ export function SetAccount(props: IProps) {
               l1Account && dispatch(loginL2AccountAsync(l1Account.address))
             }
           >
-            Sign In
+            {button2Props?.text ? button2Props?.text : "Sign In"}
           </Button>
-        }
+        )}
       </>
     );
   };
@@ -144,13 +165,13 @@ export function SetAccount(props: IProps) {
       {props.name && (
         <TxDialogTitle id="customized-dialog-title">{props.name}</TxDialogTitle>
       )}
-      {props.useCustomStyles && props.logoSVG && (
-        <div className="home-title">
-          <img src={props.logoSVG} className="home-logo"></img>
-        </div>
-      )}
 
       <DialogContent>
+        {props.useCustomStyles && props.logo && (
+          <div className="home-title">
+            <img src={props.logo} className="home-logo"></img>
+          </div>
+        )}
         {props.children && (
           <div className="home-children">{props.children}</div>
         )}
