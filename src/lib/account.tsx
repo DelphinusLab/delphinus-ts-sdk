@@ -19,7 +19,12 @@ import {
   selectL1Account,
   selectL2Account,
 } from "../lib/accountSlice";
-import { L1AccountInfo, SubstrateAccountInfo, TokenInfo } from "./type";
+import {
+  L1AccountInfo,
+  SubstrateAccountInfo,
+  TokenInfo,
+  TokenInfoFull,
+} from "./type";
 import { AsyncThunkAction } from "@reduxjs/toolkit";
 import BN from "bn.js";
 import { fromPreciseWeiRepr } from "./amount";
@@ -188,15 +193,15 @@ export function SetAccount(props: IProps) {
 }
 
 interface amountElementProps {
-  amount?: BN,
-  token: TokenInfo,
+  amount?: BN;
+  token: TokenInfo | TokenInfoFull;
 }
 
 export function AmountElement(props: amountElementProps) {
-  if(props.amount) {
+  if (props.amount) {
     let a = fromPreciseWeiRepr(props.amount, props.token.wei);
-    return (<>{a.amount}</>);
+    return <>{a.amount}</>;
   } else {
-    return (<>loading...</>);
+    return <>loading...</>;
   }
 }
