@@ -58,6 +58,18 @@ describe("test fromPreciseWeiRepr", () => {
       input: false,
     });
   });
+
+  test("wei 18 case 3", () => {
+    let res: Amount.Amount = Amount.fromPreciseWeiRepr(
+        new BN("1100000"),
+        18
+      );
+      expect(res).toEqual({
+        wei: 18,
+        amount: 0.0000000000011,
+        input: false,
+      });
+  });
 });
 
 describe("test toPreciseWeiRepr", () => {
@@ -91,5 +103,15 @@ describe("test toPreciseWeiRepr", () => {
     };
     let res: BN = Amount.toPreciseWeiRepr(input);
     expect(res).toEqual(new BN("1100000000000000000"));
+  });
+
+  test("wei 18 case 2", () => {
+    let input: Amount.Amount = {
+      wei: 18,
+      amount: 0.0000000000011,
+      input: true,
+    };
+    let res: BN = Amount.toPreciseWeiRepr(input);
+    expect(res).toEqual(new BN("1100000"));
   });
 });
