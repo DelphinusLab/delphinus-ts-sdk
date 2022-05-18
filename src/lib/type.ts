@@ -1,3 +1,4 @@
+import BN from "bn.js";
 import { IKeyringPair } from "@polkadot/types/types";
 
 export interface SubstrateAccountInfo {
@@ -24,8 +25,9 @@ export interface TokenInfo {
   name: string;
   chainId: string;
   index: number;
-  l2Balance?: string;
-  l1Balance?: string;
+  wei: number;
+  l2Balance?: BN;
+  l1Balance?: BN;
 }
 
 export interface ChainInfo {
@@ -40,6 +42,7 @@ export interface TokenInfoFull {
   tokenName: string;
   chainId: string;
   chainName: string;
+  wei: number;
   index: number;
 }
 

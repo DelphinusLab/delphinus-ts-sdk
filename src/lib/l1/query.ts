@@ -32,7 +32,7 @@ export async function queryTokenL1Balance(
   chainId: string,
   tokenAddress: string,
   l1Account: L1AccountInfo
-) {
+):Promise<BN> {
   let config = await getConfigByChainId(L1ClientRole.Wallet, chainId);
   return withL1Client(config, false, async (l1client: L1Client) => {
     let token = l1client.getTokenContract(
@@ -46,11 +46,10 @@ export async function queryTokenL1Balance(
   });
 }
 
-export async function prepareMetaData(pool_list: Array<Array<number>>) {
+export async function prepareMetaData(pool_list: Array<Array<number>>): Promise<BridgeMetadata> {
   let config = await getConfigByChainId(L1ClientRole.Wallet, WalletSnap);
   return await withL1Client(config, false, async (l1client: L1Client) => {
     let bridge = l1client.getBridgeContract();
-    console.log("got bridge");
     let pools = await Promise.all(
       pool_list.map(async (info) => {
         let poolidx = info[0];

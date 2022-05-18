@@ -1,10 +1,7 @@
 /* eslint-disable jsx-a11y/alt-text */
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
-import Modal from "@mui/material/Modal";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -22,8 +19,15 @@ import {
   selectL1Account,
   selectL2Account,
 } from "../lib/accountSlice";
-import { L1AccountInfo, SubstrateAccountInfo } from "./type";
+import {
+  L1AccountInfo,
+  SubstrateAccountInfo,
+  TokenInfo,
+  TokenInfoFull,
+} from "./type";
 import { AsyncThunkAction } from "@reduxjs/toolkit";
+import BN from "bn.js";
+import { fromPreciseWeiRepr } from "./amount";
 
 const style: SxProps<Theme> = {
   position: "absolute",
@@ -186,4 +190,18 @@ export function SetAccount(props: IProps) {
       </DialogContent>
     </TxDialog>
   );
+}
+
+interface amountElementProps {
+  amount?: BN;
+  token: TokenInfo | TokenInfoFull;
+}
+
+export function AmountElement(props: amountElementProps) {
+  if (props.amount) {
+    let a = fromPreciseWeiRepr(props.amount, props.token.wei);
+    return <>{a.amount}</>;
+  } else {
+    return <>loading...</>;
+  }
 }
