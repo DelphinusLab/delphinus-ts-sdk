@@ -1,4 +1,4 @@
-import react from "react";
+import React from "react";
 import TextField from "@mui/material/TextField";
 
 interface InputProps {
@@ -6,7 +6,7 @@ interface InputProps {
   className?: string;
   value: string;
   disabled?: boolean;
-  style?: react.CSSProperties;
+  style?: React.CSSProperties;
   label?: string;
   onChange: (e: any) => void;
 }
