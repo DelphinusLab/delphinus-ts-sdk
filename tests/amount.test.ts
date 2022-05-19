@@ -126,10 +126,10 @@ describe("test toAmountInput", () => {
       wei: 18,
       amount: "1.0000000000000000000000000011101",
     };
-    function toPreciseWeiReprThrow() {
+    function toAmountInputThrow() {
       Amount.toAmountInput(input.amount, input.wei);
     }
 
-    expect(toPreciseWeiReprThrow).toThrow();
+    expect(toAmountInputThrow).toThrow();
   });
 });
