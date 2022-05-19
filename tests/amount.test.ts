@@ -117,7 +117,6 @@ describe("test toAmountInput", () => {
       amount: "10000000000000000000000000.000000000011101",
     };
     let res: BN = Amount.toAmountInput(input.amount, input.wei).raw;
-    console.log(res.toString());
 
     expect(res).toEqual(new BN("10000000000000000000000000000000000011101000"));
   });

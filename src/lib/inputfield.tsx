@@ -4,7 +4,7 @@ import TextField from "@mui/material/TextField";
 interface InputProps {
   wei?: number;
   className?: string;
-  value?: string;
+  value: string;
   disabled?: boolean;
   style?: react.CSSProperties;
   label?: string;
@@ -25,6 +25,7 @@ export default function InputField(props: InputProps) {
 
   return (
     <TextField
+      className={props.className!}
       autoFocus
       margin="dense"
       disabled={props.disabled!}
