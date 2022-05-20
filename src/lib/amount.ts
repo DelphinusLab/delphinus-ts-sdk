@@ -19,7 +19,6 @@ export function fromPreciseWeiRepr(repr: BN, wei: number) {
   let multiplier = getMultiplier(wei);
   let whole = repr.div(pow_wei).toString();
   let fraction = repr.mod(pow_wei).toString();
-
   //add 0s to the start of the fractional/decimal part
   while (fraction.length < multiplier.length - 1) {
     fraction = "0" + fraction;
@@ -28,8 +27,11 @@ export function fromPreciseWeiRepr(repr: BN, wei: number) {
   while (fraction[fraction.length - 1] === "0") {
     fraction = fraction.substring(0, fraction.length - 1);
   }
-  //change to number type
-  const amount = whole + "." + fraction;
+  let amount = whole;
+  if (fraction !== "") {
+    amount += "." + fraction;
+  }
+
   const raw = repr;
 
   return {
