@@ -64,6 +64,20 @@ describe("test fromPreciseWeiRepr", () => {
       input: false,
     });
   });
+
+  test("no fraction case", () => {
+    let res: Amount.Amount = Amount.fromPreciseWeiRepr(
+      new BN("1000000"),
+      2
+    );
+    expect(res).toEqual({
+      wei: 2,
+      amount: "10000",
+      raw: new BN("1000000"),
+      input: false,
+    });
+  });
+
 });
 
 describe("test toAmountInput", () => {
