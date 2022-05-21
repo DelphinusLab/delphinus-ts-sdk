@@ -79,11 +79,8 @@ function fractionalToBN(num: string, wei: number): BN {
   if (negative) {
     throw new Error("Negative number encountered");
   }
-  const comps = num.split("."); //get whole and fractional parts of input amount
-  if (comps.length > 2) throw new Error("too many decimal points");
-
-  let whole = comps[0],
-    fraction = comps[1];
+  let [whole, fraction, ext] = num.split("."); //get whole and fractional parts of input amount
+  if (ext !== undefined) throw new Error("too many decimal points");
 
   if (!whole) {
     whole = "0";
