@@ -7,11 +7,6 @@ export interface Amount {
   input: boolean;
 }
 
-let zeros = "0";
-while (zeros.length < 256) {
-  zeros += zeros;
-}
-
 export function fromPreciseWeiRepr(repr: BN, wei: number) {
   //ethersjs format function for reference
   //https://github.com/ethers-io/ethers.js/blob/8b62aeff9cce44cbd16ff41f8fc01ebb101f8265/packages/bignumber/src.ts/fixednumber.ts#L42
@@ -72,7 +67,7 @@ function getMultiplier(decimals: number): string {
     decimals <= 256 &&
     !(decimals % 1)
   ) {
-    return "1" + zeros.substring(0, decimals);
+    return "1" + Array(decimals).fill("0").join("");
   }
   throw new Error("Invalid decimal value");
 }
