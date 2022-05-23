@@ -9,6 +9,7 @@ import { SwapHelper, CryptoUtil } from "delphinus-l2-client-helper/src/swap";
 import { queryCurrentL1Account } from "../l1/query";
 import { getAPI, getCryptoUtil, stringToBN } from "./api";
 import { getTokenIndex } from "./info";
+import { Amount, toPreciseWeiRepr } from "../amount";
 
 /* ------------ Client ----------- */
 
@@ -100,7 +101,7 @@ export async function withdraw(
   l2Account: SubstrateAccountInfo,
   chainId: string,
   token: string,
-  amount: string,
+  amount: Amount,
   progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
   error?: (m: string) => void
 ) {
@@ -125,7 +126,7 @@ export async function withdraw(
     let tx = await helper.withdraw(
       stringToBN(accountIndex),
       new BN(tokenIndex),
-      stringToBN(amount),
+      toPreciseWeiRepr(amount),
       l1account,
       stringToBN(l2nonce)
     );
@@ -143,8 +144,8 @@ export async function supply(
   l2Account: SubstrateAccountInfo,
   tokenIndex0: number,
   tokenIndex1: number,
-  amount0: string,
-  amount1: string,
+  amount0: Amount,
+  amount1: Amount,
   progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
   error?: (m: string) => void
 ) {
@@ -165,8 +166,8 @@ export async function supply(
     let tx = await helper.poolSupply(
       stringToBN(accountIndex),
       new BN(poolIndex),
-      stringToBN(amount0),
-      stringToBN(amount1),
+      toPreciseWeiRepr(amount0),
+      toPreciseWeiRepr(amount1),
       stringToBN(l2nonce)
     );
     console.log("tx finalized at:", tx);
@@ -183,8 +184,8 @@ export async function retrieve(
   l2Account: SubstrateAccountInfo,
   tokenIndex0: number,
   tokenIndex1: number,
-  amount0: string,
-  amount1: string,
+  amount0: Amount,
+  amount1: Amount,
   progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
   error?: (m: string) => void
 ) {
@@ -205,8 +206,8 @@ export async function retrieve(
     let tx = await helper.poolRetrieve(
       stringToBN(accountIndex),
       new BN(poolIndex),
-      stringToBN(amount0),
-      stringToBN(amount1),
+      toPreciseWeiRepr(amount0),
+      toPreciseWeiRepr(amount1),
       stringToBN(l2nonce)
     );
 
@@ -224,8 +225,8 @@ export async function swap(
   l2Account: SubstrateAccountInfo,
   tokenIndex0: number,
   tokenIndex1: number,
-  amount0: string,
-  amount1: string,
+  amount0: Amount,
+  amount1: Amount,
   progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
   error?: (m: string) => void
 ) {
@@ -238,7 +239,7 @@ export async function swap(
     const accountAddress = l2Account.address;
     const accountIndex = await queryAccountIndex(accountAddress);
     const l2nonce = await queryL2Nonce(accountAddress);
-    const amount = stringToBN(amount0, "withdraw amount");
+    const amount = toPreciseWeiRepr(amount0);
     const helper = new SwapHelper(
       Buffer.from(l2Account.seed).toString("hex"),
       sendUntilFinalize(l2Account),
@@ -265,13 +266,13 @@ export async function swap(
 
 export async function charge(
   l2Account: SubstrateAccountInfo,
-  amount: string,
+  amount: Amount,
   progress: (a: string) => void,
   error: (a: string) => void
 ) {
   try {
     progress("Waiting for process.");
-    sendUntilFinalize(l2Account)("charge", stringToBN(amount));
+    sendUntilFinalize(l2Account)("charge", toPreciseWeiRepr(amount));
   } catch (e: any) {
     error(e.toString());
     return;

@@ -4,6 +4,7 @@ import { L1Client, withL1Client } from "solidity/clients/client";
 import { getConfigByChainId } from "delphinus-deployment/src/config";
 import { L1ClientRole } from "delphinus-deployment/src/types";
 import { PromiseBinder } from "web3subscriber/src/pbinder";
+import {Amount, toPreciseWeiRepr} from "../amount";
 
 const ss58 = require("substrate-ss58");
 
@@ -15,7 +16,7 @@ export async function deposit(
   l2Account: SubstrateAccountInfo,
   chainId: string,
   tokenAddress: string, // hex without 0x prefix
-  amount: string,
+  amount: Amount,
   progress: (s: string, h: string, r: string, ratio: number) => void,
   error: (m: string) => void,
   querying: (m: string) => Promise<string>
@@ -33,7 +34,7 @@ export async function deposit(
         let BridgeContract = l1client.getBridgeContract();
         let r = BridgeContract.deposit(
           tokenContract,
-          parseInt(amount),
+          toPreciseWeiRepr(amount),
           token_id
         );
         let l1_txhash = "";
@@ -92,7 +93,7 @@ export async function deposit(
 export async function faucet(
   chainId: string,
   tokenAddress: string, // hex without 0x prefix
-  amount: string,
+  amount: Amount,
   progress: (s: string, h: string, r: string, ratio: number) => void,
   error: (m: string) => void,
 ) {
@@ -108,10 +109,9 @@ export async function faucet(
         let r = pbinder.return(async () => {
           return await pbinder.bind(
             "Mint",
-            tokenContract.mint(parseInt(amount))
+            tokenContract.mint(toPreciseWeiRepr(amount))
           );
         });
-
         let l1_txhash = "";
         r.when("Mint", "transactionHash", (tx: string) =>
           progress("mint", "Transaction Sent", tx, 20)
