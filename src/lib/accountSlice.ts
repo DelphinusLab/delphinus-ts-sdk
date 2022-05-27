@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { SubstrateAccountInfo, L1AccountInfo } from './type';
 import { loginL1Account, deriveL2Account } from "./l1/account";
-import { tryLoginL2Account, register } from "./l2/utils";
+import { tryLoginL2Account, register, updateGasInfo } from "./l2/utils";
 import { queryAccountIndex } from "./l2/info";
 
 export interface AccountState {
@@ -60,6 +60,13 @@ export const registerL2AccountAsync = createAsyncThunk<SubstrateAccountInfo, Sub
   }
 );
 
+export const updateL2AccountGasAsync = createAsyncThunk<SubstrateAccountInfo, SubstrateAccountInfo>(
+  'acccount/updateL2AccountGas',
+  async (l2account: SubstrateAccountInfo, thunkApi) => {
+    return await updateGasInfo(l2account);
+  }
+);
+
 
 export const accountSlice = createSlice({
   name: 'account',
@@ -91,7 +98,13 @@ export const accountSlice = createSlice({
         state.status = 'Ready';
         console.log(c);
         state.l2Account = c.payload;
+      })
+      .addCase(updateL2AccountGasAsync.fulfilled, (state, c) => {
+        state.status = 'Ready';
+        console.log(c);
+        state.l2Account = c.payload;
       });
+
   },
 });
 

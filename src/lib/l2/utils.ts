@@ -20,7 +20,7 @@ export async function register(account: SubstrateAccountInfo) {
   }
 }
 
-export async function tryLoginL2Account(account: string) {
+export async function tryLoginL2Account(account: string): Promise<SubstrateAccountInfo> {
   const seed = new Uint8Array(
     await window.crypto.subtle.digest(
       "SHA-256",
@@ -38,6 +38,15 @@ export async function tryLoginL2Account(account: string) {
     account: accountIdx,
     address: pair.address,
     injector: pair,
+    balance: balance,
+  };
+}
+
+
+export async function updateGasInfo(accountInfo: SubstrateAccountInfo): Promise<SubstrateAccountInfo> {
+  const pair = keyring.addFromSeed(accountInfo.seed);
+  const balance = await querySubstrateBalance(pair.address);
+  return {...accountInfo,
     balance: balance,
   };
 }
