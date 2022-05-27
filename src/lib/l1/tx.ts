@@ -29,13 +29,14 @@ export async function deposit(
     async (l1client: L1Client) => {
       try {
         let token_address = "0x" + tokenAddress;
-        let token_id = ss58.addressToAddressId(accountAddress);
+        let l2account = ss58.addressToAddressId(accountAddress);
         let tokenContract = l1client.getTokenContract(token_address);
         let BridgeContract = l1client.getBridgeContract();
         let r = BridgeContract.deposit(
           tokenContract,
           toPreciseWeiRepr(amount),
-          token_id
+          l1client.getDefaultAccount(),
+          l2account
         );
         let l1_txhash = "";
         r.when("snapshot", "Approve", () =>
