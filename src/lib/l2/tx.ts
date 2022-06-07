@@ -1,21 +1,18 @@
 import BN from "bn.js";
-import {
-    queryPoolIndex,
-    queryAccountIndex,
-    queryL2Nonce
-} from "./info";
+import { queryPoolIndex, queryAccountIndex, queryL2Nonce } from "./info";
 import { SubstrateAccountInfo } from "../type";
 import { SwapHelper, CryptoUtil } from "delphinus-l2-client-helper/src/swap";
 import { queryCurrentL1Account } from "../l1/query";
 import { getAPI, getCryptoUtil, stringToBN } from "./api";
 import { getTokenIndex } from "./info";
 import { Amount, toPreciseWeiRepr } from "../amount";
+import { convertL2Error } from "../errorhandlers/errors";
 
 /* ------------ Client ----------- */
 
 export async function queryDepositTxStatus(tx: string) {
   const api = await getAPI();
-  const tx_status  = await api.query.swapModule.l1TxMap(tx);
+  const tx_status = await api.query.swapModule.l1TxMap(tx);
   //const tx_status = await api.query.swapModule.depositMap(rid);
   //console.log(`queryDepositTxStatus: [tx:${tx}], [rid:${rid}], [status:${tx_status}].`);
   console.log(`queryDepositTxStatus: [tx:${tx}], [status:${tx_status}].`);
@@ -27,7 +24,6 @@ export async function checkComplete(rid: string) {
   const codec = await api.query.swapModule.completeReqMap(rid);
 }
 */
-
 
 /* ------------ Transaction ------------ */
 
@@ -41,13 +37,18 @@ function sendUntilFinalize(l2Account: SubstrateAccountInfo) {
     ).nonce.toNumber();
     const nonce = new BN(nonceRaw);
 
-    let req = await new Promise<[string,string]>(async (resolve, reject) => {
+    let req = await new Promise<[string, string]>(async (resolve, reject) => {
       console.log("sendUntilFinalize");
-      const get_rid = (e:any) => {
-        const {event, phase } = e;
-        console.log("event get:", event.data.toString(), event.method, event.section);
+      const get_rid = (e: any) => {
+        const { event, phase } = e;
+        console.log(
+          "event get:",
+          event.data.toString(),
+          event.method,
+          event.section
+        );
         return event.data[0];
-      }
+      };
       const unsub = await tx.signAndSend(
         l2Account.injector,
         { nonce },
@@ -58,19 +59,17 @@ function sendUntilFinalize(l2Account: SubstrateAccountInfo) {
           if (status.isFinalized) {
             unsub();
             const suc_event = events.find((e) => {
-              const {event, phase} = e;
-              return (event.section == "swapModule");
+              const { event, phase } = e;
+              return event.section == "swapModule";
             });
 
             const err_event = events.find((e) =>
               api.events.system.ExtrinsicFailed.is(e.event)
             );
+
             err_event
-              ? reject(new Error(err_event.toString()))
-              : resolve([
-                status.asFinalized.toString(),
-                get_rid(suc_event)
-              ]);
+              ? reject(new Error(convertL2Error(err_event).toString()))
+              : resolve([status.asFinalized.toString(), get_rid(suc_event)]);
           }
         }
       );
@@ -102,7 +101,12 @@ export async function withdraw(
   chainId: string,
   token: string,
   amount: Amount,
-  progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
+  progress?: (
+    state: string,
+    hint: string,
+    receipt: string,
+    ratio: number
+  ) => void,
   error?: (m: string) => void
 ) {
   try {
@@ -112,8 +116,8 @@ export async function withdraw(
     console.log("token index:", tokenIndex);
     const accountIndex = await queryAccountIndex(accountAddress);
     if (accountIndex === "") {
-        console.log("query index:", accountIndex);
-        throw "Account has not been activated";
+      console.log("query index:", accountIndex);
+      throw "Account has not been activated";
     }
     const l2nonce = await queryL2Nonce(accountAddress);
     const l1account = await queryCurrentL1Account(chainId);
@@ -131,7 +135,7 @@ export async function withdraw(
       stringToBN(l2nonce)
     );
     console.log("tx finalized at:", tx);
-    if(progress) {
+    if (progress) {
       progress("transaction", "done", tx[0], 70);
       progress("finalize", "queued", tx[1], 100);
     }
@@ -146,7 +150,12 @@ export async function supply(
   tokenIndex1: number,
   amount0: Amount,
   amount1: Amount,
-  progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
+  progress?: (
+    state: string,
+    hint: string,
+    receipt: string,
+    ratio: number
+  ) => void,
   error?: (m: string) => void
 ) {
   try {
@@ -171,7 +180,7 @@ export async function supply(
       stringToBN(l2nonce)
     );
     console.log("tx finalized at:", tx);
-    if(progress) {
+    if (progress) {
       progress("transaction", "done", tx[0], 70);
       progress("finalize", "queued", tx[1], 100);
     }
@@ -186,7 +195,12 @@ export async function retrieve(
   tokenIndex1: number,
   amount0: Amount,
   amount1: Amount,
-  progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
+  progress?: (
+    state: string,
+    hint: string,
+    receipt: string,
+    ratio: number
+  ) => void,
   error?: (m: string) => void
 ) {
   try {
@@ -211,11 +225,10 @@ export async function retrieve(
       stringToBN(l2nonce)
     );
 
-    if(progress) {
+    if (progress) {
       progress("transaction", "done", tx[0], 70);
       progress("finalize", "queued", tx[1], 100);
     }
-
   } catch (e: any) {
     error?.(e.toString());
   }
@@ -227,7 +240,12 @@ export async function swap(
   tokenIndex1: number,
   amount0: Amount,
   amount1: Amount,
-  progress?: (state: string, hint:string, receipt:string, ratio:number) => void,
+  progress?: (
+    state: string,
+    hint: string,
+    receipt: string,
+    ratio: number
+  ) => void,
   error?: (m: string) => void
 ) {
   try {
@@ -254,12 +272,12 @@ export async function swap(
       stringToBN(l2nonce)
     );
 
-    if(progress) {
+    if (progress) {
       progress("transaction", "done", tx[0], 70);
       progress("finalize", "queued", tx[1], 100);
     }
-
   } catch (e: any) {
+    console.log(e, "Swap Error");
     error?.(e.toString());
   }
 }
@@ -278,5 +296,3 @@ export async function charge(
     return;
   }
 }
-
-
