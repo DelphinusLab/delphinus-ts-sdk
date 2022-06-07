@@ -11,5 +11,6 @@ export function convertL2Error(errorEvent: EventRecord) {
     )?.message;
     return errMsg ? errMsg : "An unknown error was encountered.";
   }
+  console.log(errObj, "Unexpected L2 Error");
   return "An unexpected error has occured.";
 }
