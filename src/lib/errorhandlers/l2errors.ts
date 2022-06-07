@@ -12,8 +12,7 @@ export const errorMapping = [
   {
     type: "BalanceNotEnough",
     index: 2,
-    message:
-      "Insufficient funds for this transaction. Please enter a smaller amount.",
+    message: "Insufficient funds for this transaction.",
   },
   {
     type: "NFTNoAuthority",
@@ -33,7 +32,7 @@ export const errorMapping = [
   {
     type: "PoolBalanceNotEnough",
     index: 6,
-    message: "PoolBalanceNotEnough error.",
+    message: "Insufficient liquidity in the pool for this transaction.",
   },
   {
     type: "PoolBalanceOverflow",
