@@ -34,7 +34,7 @@ export async function queryTokenL1Balance(
   l1Account: L1AccountInfo
 ):Promise<BN> {
   let config = await getConfigByChainId(L1ClientRole.Wallet, chainId);
-  return withL1Client(config, false, async (l1client: L1Client) => {
+  return await withL1Client(config, false, async (l1client: L1Client) => {
     let token = l1client.getTokenContract(
       new BN(tokenAddress, 16).toString(16, 20),
       l1Account.address
