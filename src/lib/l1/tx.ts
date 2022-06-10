@@ -1,15 +1,16 @@
 import BN from "bn.js";
-import { SubstrateAccountInfo} from "../type";
+import { SubstrateAccountInfo } from "../type";
 import { L1Client, withL1Client } from "solidity/clients/client";
 import { getConfigByChainId } from "delphinus-deployment/src/config";
 import { L1ClientRole } from "delphinus-deployment/src/types";
 import { PromiseBinder } from "web3subscriber/src/pbinder";
-import {Amount, toPreciseWeiRepr} from "../amount";
+import { Amount, toPreciseWeiRepr } from "../amount";
+import { convertL1Error } from "../errorhandlers/errors";
 
 const ss58 = require("substrate-ss58");
 
-function timeout(ms:number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+function timeout(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function deposit(
@@ -42,22 +43,28 @@ export async function deposit(
         r.when("snapshot", "Approve", () =>
           progress("approve", "Wait confirm ...", "", 10)
         )
-        .when("Approve", "transactionHash", (tx: string) =>
-          progress("approve", "Transaction Sent", tx, 20)
-        )
-        .when("Approve", "receipt", (tx: any) =>
-          progress("approve", "Done", tx.blockHash, 30)
-        )
-        .when("snapshot", "Deposit", () =>
-          progress("deposit", "Wait confirm ...", "", 40)
-        )
-        .when("Deposit", "transactionHash", (tx: string) => {
-          l1_txhash = tx;
-          progress("desposit", "Transaction Sent", tx, 50)
-        })
-        .when("Deposit", "receipt", (tx: any) =>
-          progress("deposit", "Done", tx.blockHash, 70)
-        );
+          .when("Approve", "transactionHash", (tx: string) =>
+            progress("approve", "Transaction Sent", tx, 20)
+          )
+          .when("Approve", "receipt", (tx: any) =>
+            progress("approve", "Done", tx.blockHash, 30)
+          )
+          .when("snapshot", "CheckDeposit", () =>
+            progress("deposit", "Wait confirm ...", "", 33)
+          )
+          .when("snapshot", "CheckDeposit", () =>
+            progress("deposit", "Done", "", 37)
+          )
+          .when("snapshot", "Deposit", () =>
+            progress("deposit", "Wait confirm ...", "", 40)
+          )
+          .when("Deposit", "transactionHash", (tx: string) => {
+            l1_txhash = tx;
+            progress("desposit", "Transaction Sent", tx, 50);
+          })
+          .when("Deposit", "receipt", (tx: any) =>
+            progress("deposit", "Done", tx.blockHash, 70)
+          );
         let tx = await r;
         console.log(tx);
         const p = async () => {
@@ -84,19 +91,21 @@ export async function deposit(
         };
         await p();
       } catch (e: any) {
-        error(e.message);
+        console.log(e);
+        let txerror = await convertL1Error(e, chainId);
+        console.error(txerror);
+        error(txerror.message);
       }
     }
   );
 }
-
 
 export async function faucet(
   chainId: string,
   tokenAddress: string, // hex without 0x prefix
   amount: Amount,
   progress: (s: string, h: string, r: string, ratio: number) => void,
-  error: (m: string) => void,
+  error: (m: string) => void
 ) {
   console.log("call deposit", chainId, tokenAddress, amount);
   await withL1Client(
@@ -116,10 +125,9 @@ export async function faucet(
         let l1_txhash = "";
         r.when("Mint", "transactionHash", (tx: string) =>
           progress("mint", "Transaction Sent", tx, 20)
-        )
-        .when("Mint", "receipt", (tx: any) =>
+        ).when("Mint", "receipt", (tx: any) =>
           progress("mint", "Done", tx.blockHash, 100)
-        )
+        );
         let tx = await r;
       } catch (e: any) {
         error(e.message);
@@ -127,4 +135,3 @@ export async function faucet(
     }
   );
 }
-

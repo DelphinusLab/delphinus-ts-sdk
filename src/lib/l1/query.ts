@@ -39,6 +39,7 @@ export async function queryTokenL1Balance(
   l1Account: L1AccountInfo
 ): Promise<BN> {
   let config = await getConfigByChainId(L1ClientRole.Wallet, chainId);
+<<<<<<< Updated upstream
   console.log("queryTokenL1Bal, before l1Client CB");
 
   return await withL1Client(config, false, async (l1client: L1Client) => {
@@ -59,6 +60,20 @@ export async function queryTokenL1Balance(
 
       throw e;
     }
+=======
+
+  return await withL1Client(config, false, async (l1client: L1Client) => {
+    let token = l1client.getTokenContract(
+      new BN(tokenAddress, 16).toString(16, 20),
+      l1Account.address
+    );
+    console.log("before error");
+    console.log("nid is", await l1client.web3.web3Instance.eth.net.getId());
+    console.log("after error");
+    console.log("token is", token);
+    let balance = await token.balanceOf(l1Account.address);
+    return balance;
+>>>>>>> Stashed changes
   });
 }
 

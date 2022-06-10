@@ -1,6 +1,13 @@
 import { errorMapping } from "./l2errors";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-
+import { L1Client, withL1Client } from "solidity/clients/client";
+import { TransactionConfig, BlockNumber } from "web3-core";
+import Web3 from "web3";
+import {
+  getConfigByChainId,
+  WalletSnap,
+} from "delphinus-deployment/src/config";
+import { L1ClientRole } from "delphinus-deployment/src/types";
 export function convertL2Error(errorEvent: EventRecord) {
   const errObj: any = errorEvent?.toJSON();
   let errorModule = errObj?.event?.data[0].module;
@@ -13,4 +20,38 @@ export function convertL2Error(errorEvent: EventRecord) {
   }
   console.log(errObj, "Unexpected L2 Error");
   return "An unexpected error has occured.";
+}
+
+export async function convertL1Error(error: any, chainId: string) {
+  //https://ethereum.stackexchange.com/questions/111252/get-the-real-error-of-transaction-failed
+  //Replay the the transaction at block
+
+  //Get existing Tx, replay by calling the tx again
+
+  let config = await getConfigByChainId(L1ClientRole.Wallet, chainId);
+
+  if (error.receipt) {
+    //Do EVM Replay
+    //get existing tx, and then catch the error from call()
+
+    let res = await withL1Client(config, false, async (l1client: L1Client) => {
+      console.log(error.receipt.transactionHash);
+      const tx = await l1client.web3.web3Instance.eth.getTransaction(
+        error.receipt.transactionHash
+      );
+      console.log(tx);
+      try {
+        let result = await l1client.web3.web3Instance.eth.call(
+          tx as TransactionConfig,
+          tx.blockNumber as BlockNumber
+        );
+      } catch (e) {
+        console.log(e);
+        return e;
+      }
+    });
+    return res;
+  }
+
+  return error;
 }
