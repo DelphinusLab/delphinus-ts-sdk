@@ -55,12 +55,3 @@ export async function convertL1Error(error: any, chainId: string) {
 
   return error;
 }
-
-function hex_to_ascii(str1: string) {
-  var hex = str1.toString();
-  var str = "";
-  for (var n = 0; n < hex.length; n += 2) {
-    str += String.fromCharCode(parseInt(hex.substring(n, 2), 16));
-  }
-  return str;
-}
