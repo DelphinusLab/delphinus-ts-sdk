@@ -47,7 +47,9 @@ export async function convertL1Error(error: any, chainId: string) {
         );
       } catch (err: any) {
         console.log({ err }, "Revert Error");
-        return err.reason ? err.reason : "An unknown error was encountered.";
+        return err.reason
+          ? new Error(`EVM reverted: ${err.reason}`)
+          : new Error("An unexpected error has occured.");
       }
     });
     return res;
