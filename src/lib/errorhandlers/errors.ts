@@ -2,12 +2,12 @@ import { errorMapping } from "./l2errors";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
 import { L1Client, withL1Client } from "solidity/clients/client";
 import { TransactionConfig, BlockNumber } from "web3-core";
-import Web3 from "web3";
 import {
   getConfigByChainId,
   WalletSnap,
 } from "delphinus-deployment/src/config";
 import { L1ClientRole } from "delphinus-deployment/src/types";
+
 export function convertL2Error(errorEvent: EventRecord) {
   const errObj: any = errorEvent?.toJSON();
   let errorModule = errObj?.event?.data[0].module;
@@ -35,23 +35,32 @@ export async function convertL1Error(error: any, chainId: string) {
     //get existing tx, and then catch the error from call()
 
     let res = await withL1Client(config, false, async (l1client: L1Client) => {
-      console.log(error.receipt.transactionHash);
       const tx = await l1client.web3.web3Instance.eth.getTransaction(
         error.receipt.transactionHash
       );
-      console.log(tx);
+
       try {
-        let result = await l1client.web3.web3Instance.eth.call(
+        l1client.web3.web3Instance.eth.handleRevert = true;
+        await l1client.web3.web3Instance.eth.call(
           tx as TransactionConfig,
           tx.blockNumber as BlockNumber
         );
-      } catch (e) {
-        console.log(e);
-        return e;
+      } catch (err: any) {
+        console.log({ err }, "Revert Error");
+        return err.reason ? err.reason : "An unknown error was encountered.";
       }
     });
     return res;
   }
 
   return error;
+}
+
+function hex_to_ascii(str1: string) {
+  var hex = str1.toString();
+  var str = "";
+  for (var n = 0; n < hex.length; n += 2) {
+    str += String.fromCharCode(parseInt(hex.substring(n, 2), 16));
+  }
+  return str;
 }

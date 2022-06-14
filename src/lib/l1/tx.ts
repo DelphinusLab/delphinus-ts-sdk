@@ -93,8 +93,7 @@ export async function deposit(
       } catch (e: any) {
         console.log(e);
         let txerror = await convertL1Error(e, chainId);
-        console.error(txerror);
-        error(txerror.message);
+        error(txerror);
       }
     }
   );
