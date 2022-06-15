@@ -1,5 +1,10 @@
 import BN from "bn.js";
-import { PoolInfo, L1AccountInfo, SubstrateAccountInfo, BridgeMetadata } from "../type";
+import {
+  PoolInfo,
+  L1AccountInfo,
+  SubstrateAccountInfo,
+  BridgeMetadata,
+} from "../type";
 import { L1Client, withL1Client } from "solidity/clients/client";
 import { DelphinusWeb3, withBrowerWeb3 } from "web3subscriber/src/client";
 import {
@@ -32,21 +37,25 @@ export async function queryTokenL1Balance(
   chainId: string,
   tokenAddress: string,
   l1Account: L1AccountInfo
-):Promise<BN> {
+): Promise<BN> {
   let config = await getConfigByChainId(L1ClientRole.Wallet, chainId);
   return await withL1Client(config, false, async (l1client: L1Client) => {
     let token = l1client.getTokenContract(
       new BN(tokenAddress, 16).toString(16, 20),
       l1Account.address
     );
+    console.log("before error");
     console.log("nid is", await l1client.web3.web3Instance.eth.net.getId());
+    console.log("after error");
     console.log("token is", token);
     let balance = await token.balanceOf(l1Account.address);
     return balance;
   });
 }
 
-export async function prepareMetaData(pool_list: Array<Array<number>>): Promise<BridgeMetadata> {
+export async function prepareMetaData(
+  pool_list: Array<Array<number>>
+): Promise<BridgeMetadata> {
   let config = await getConfigByChainId(L1ClientRole.Wallet, WalletSnap);
   return await withL1Client(config, false, async (l1client: L1Client) => {
     let bridge = l1client.getBridgeContract();
@@ -55,13 +64,13 @@ export async function prepareMetaData(pool_list: Array<Array<number>>): Promise<
         let poolidx = info[0];
         console.log("preparing:", poolidx, info[1], info[2]);
         try {
-        let t1 = await bridge.getTokenInfo(info[1]);
-        let t2 = await bridge.getTokenInfo(info[2]);
-        return {
-          id: poolidx,
-          tokens: [t1, t2],
-        };
-        } catch(e) {
+          let t1 = await bridge.getTokenInfo(info[1]);
+          let t2 = await bridge.getTokenInfo(info[2]);
+          return {
+            id: poolidx,
+            tokens: [t1, t2],
+          };
+        } catch (e) {
           console.log(e);
           throw e;
         }
