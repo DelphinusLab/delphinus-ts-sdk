@@ -50,7 +50,8 @@ export interface PoolInfo {
   id: number;
   tokens: TokenInfoFull[];
   share?: string;
-  amount?: string;
+  amount0?: string;
+  amount1?: string;
 }
 
 export interface BridgeMetadata {
