@@ -50,6 +50,7 @@ export async function deposit(
             progress("approve", "Done", tx.blockHash, 30)
           )
           .when("snapshot", "Deposit", () => {
+            progress("approve", "Done", "", 40);
             progress("deposit", "Wait confirm ...", "", 40);
           })
           .when("Deposit", "transactionHash", (tx: string) => {
