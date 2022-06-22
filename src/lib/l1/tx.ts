@@ -49,15 +49,10 @@ export async function deposit(
           .when("Approve", "receipt", (tx: any) =>
             progress("approve", "Done", tx.blockHash, 30)
           )
-          .when("snapshot", "CheckDeposit", () =>
-            progress("deposit", "Wait confirm ...", "", 33)
-          )
-          .when("snapshot", "CheckDeposit", () =>
-            progress("deposit", "Done", "", 37)
-          )
-          .when("snapshot", "Deposit", () =>
-            progress("deposit", "Wait confirm ...", "", 40)
-          )
+          .when("snapshot", "Deposit", () => {
+            progress("approve", "Done", "", 40);
+            progress("deposit", "Wait confirm ...", "", 40);
+          })
           .when("Deposit", "transactionHash", (tx: string) => {
             l1_txhash = tx;
             progress("desposit", "Transaction Sent", tx, 50);
@@ -113,7 +108,7 @@ export async function faucet(
     async (l1client: L1Client) => {
       try {
         let token_address = "0x" + tokenAddress;
-        let tokenContract = l1client.getTokenContract(token_address);
+        let tokenContract = l1client.getGasContract(token_address);
         let pbinder = new PromiseBinder();
         let r = pbinder.return(async () => {
           return await pbinder.bind(
