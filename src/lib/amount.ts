@@ -72,7 +72,7 @@ function getMultiplier(decimals: number): string {
   throw new Error("Invalid decimal value");
 }
 
-function fractionalToBN(num: string, wei: number): BN {
+export function fractionalToBN(num: string, wei: number): BN {
   let multiplier = getMultiplier(wei);
 
   const negative = num.substring(0, 1) === "-";
@@ -110,4 +110,37 @@ function fractionalToBN(num: string, wei: number): BN {
   const full = new BN(whole).mul(new BN(multiplier)).add(new BN(fraction));
 
   return full;
+}
+
+export function getPoolRatioAmount(
+  liquid0: BN,
+  liquid1: BN,
+  wei0: number,
+  wei1: number,
+  precision: number
+): BN {
+  if (liquid0.isZero() && liquid1.isZero()) {
+    //if pool is 0,0 liquidity, ratio is 1
+    return new BN(10).pow(new BN(precision));
+  }
+  if (liquid0.isZero() || liquid1.isZero()) {
+    //TODO: handle this case where one pool is 0
+  }
+  console.log(liquid0.toString(), liquid1.toString());
+  //This is the precision of the pool ratio to return, currently set to 15 as it is the max precision of Javascript roughly
+  let _precision = new BN(10).pow(new BN(precision));
+  let mult0 = new BN(10).pow(new BN(wei0));
+  let mult1 = new BN(10).pow(new BN(wei1));
+
+  //equalize the units of both liquidity pools
+  const lrg0 = liquid0.mul(new BN(mult1));
+  const lrg1 = liquid1.mul(new BN(mult0));
+
+  console.log(lrg0.toString(), lrg1.toString());
+
+  const ratio = lrg0.mul(_precision).div(lrg1);
+
+  console.log(ratio.toString(), "ratio of pool");
+
+  return ratio;
 }
