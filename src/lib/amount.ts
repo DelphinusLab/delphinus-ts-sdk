@@ -118,10 +118,10 @@ export function getPoolRatioAmount(
   wei0: number,
   wei1: number,
   precision: number
-): BN {
+): BN | undefined {
   if (liquid0.isZero() && liquid1.isZero()) {
-    //if pool is 0,0 liquidity, ratio is 1
-    return new BN(10).pow(new BN(precision));
+    //if pool is 0,0 liquidity, ratio is undefined
+    return undefined;
   }
   if (liquid0.isZero() || liquid1.isZero()) {
     //TODO: handle this case where one pool is 0
