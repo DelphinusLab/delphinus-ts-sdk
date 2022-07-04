@@ -1,5 +1,6 @@
 import BN from "bn.js";
-import { TokenInfo } from "./type";
+import { TokenInfoFull } from "./type";
+
 export interface Amount {
   wei: number;
   amount: string;
@@ -125,6 +126,7 @@ export function getPoolRatioAmount(
   }
   if (liquid0.isZero() || liquid1.isZero()) {
     //TODO: handle this case where one pool is 0
+    return undefined;
   }
   console.log(liquid0.toString(), liquid1.toString());
   //This is the precision of the pool ratio to return, currently set to 15 as it is the max precision of Javascript roughly
@@ -143,4 +145,90 @@ export function getPoolRatioAmount(
   console.log(ratio.toString(), "ratio of pool");
 
   return ratio;
+}
+
+export enum PoolOp {
+  Supply,
+  Retrieve,
+  Swap,
+}
+
+export function setInputAmount(
+  input: string,
+  op: PoolOp,
+  token0: TokenInfoFull,
+  token1: TokenInfoFull,
+  liquid0: BN,
+  liquid1: BN,
+  poolRatio: string,
+  inversePoolRatio: string,
+  inverse: boolean,
+  setAmt0Cb: (amt: string) => void,
+  setAmt1Cb: (amt: string) => void,
+  error: (err: string) => void
+) {
+  try {
+    //convert initial input to BN
+    const _input = fractionalToBN(input, token0.wei);
+    const precision = 30;
+    //Choose to use ratio or inverted ratio depending on input token 0 or 1
+    const preciseRatio = fractionalToBN(
+      inverse ? inversePoolRatio : poolRatio,
+      precision
+    );
+    //precision of calculation
+    const precision_multiplier = new BN(10).pow(new BN(precision));
+
+    //rough calculated amount for other token (inverse)
+    let amt = _input.mul(preciseRatio).div(precision_multiplier);
+
+    //modulous of the above calculation to ensure rounding is met
+    let mod = _input.mul(preciseRatio).mod(precision_multiplier);
+    console.log(amt.toString(), mod.toString(), "amt, mod");
+
+    //round the last digit to account for error and keep pool ratio as expected
+    if (!mod.isZero()) {
+      //depending on side of pool, add 1 or leave natural to round up or down
+      if (op === PoolOp.Retrieve) {
+        inverse ? (amt = amt) : (amt = amt.add(new BN(1)));
+      }
+      if (op === PoolOp.Supply) {
+        inverse ? (amt = amt.add(new BN(1))) : (amt = amt);
+      }
+    }
+    //Check the pool ratio will fulfull inputX*PoolY - inputY*PoolX >= 0
+    if (liquid0 && liquid1) {
+      let _in = fractionalToBN(input, token0.wei);
+      if (op === PoolOp.Retrieve) {
+        if (inverse) {
+          let check = _in.mul(liquid1).sub(amt.mul(liquid0)).gte(new BN(0));
+          console.log(check, "check if valid inputs");
+        } else {
+          let check = amt.mul(liquid1).sub(_in.mul(liquid0)).gte(new BN(0));
+          console.log(check, "check if valid inputs");
+        }
+      }
+      if (op === PoolOp.Supply) {
+        if (inverse) {
+          let check = amt.mul(liquid0).sub(_in.mul(liquid1)).gte(new BN(0));
+          console.log(check, "check if valid inputs");
+        } else {
+          let check = _in.mul(liquid0).sub(amt.mul(liquid1)).gte(new BN(0));
+          console.log(check, "check if valid inputs");
+        }
+      }
+    }
+    //set input amounts for user
+    if (inverse) {
+      setAmt0Cb(input);
+
+      setAmt1Cb(fromPreciseWeiRepr(amt, token1.wei).amount);
+    } else {
+      setAmt1Cb(input);
+
+      setAmt0Cb(fromPreciseWeiRepr(amt, token0.wei).amount);
+    }
+  } catch (err: any) {
+    error(err.message);
+  }
 }
