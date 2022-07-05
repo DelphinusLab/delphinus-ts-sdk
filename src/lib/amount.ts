@@ -244,3 +244,80 @@ export function setInputAmount(
     error(err.message);
   }
 }
+
+export function setSwapAmount(
+  input: string,
+  pool: PoolInfo,
+  tokenIn: TokenInfoFull,
+  tokenOut: TokenInfoFull,
+  setPayCb: (amt: string) => void,
+  setGetCb: (amt: string) => void,
+  error: (err: string) => void
+) {
+  try {
+    setPayCb(input);
+
+    const reverse = pool.tokens[0].index === tokenIn.index ? false : true;
+
+    const _input = fractionalToBN(input, tokenIn.wei);
+    console.log(pool.amount1, pool.amount0, "poolamounts");
+    const precision = 30;
+
+    //precision of calculation
+    const precision_multiplier = new BN(10).pow(new BN(precision));
+
+    const fee = new BN(1021).mul(precision_multiplier).div(new BN(1024));
+
+    //calculation for output token
+    let amt = _input
+      .mul(new BN(reverse ? pool.amount0! : pool.amount1!))
+      .mul(fee)
+      .div(
+        _input
+          .add(new BN(reverse ? pool.amount1! : pool.amount0!))
+          .mul(precision_multiplier)
+      );
+
+    setGetCb(fromPreciseWeiRepr(amt, tokenOut.wei).amount);
+  } catch (err: any) {
+    error(err.message);
+  }
+}
+
+export function setRequiredAmount(
+  input: string,
+  pool: PoolInfo,
+  tokenIn: TokenInfoFull,
+  tokenOut: TokenInfoFull,
+  setPayCb: (amt: string) => void,
+  setGetCb: (amt: string) => void,
+  error: (err: string) => void
+) {
+  try {
+    setGetCb(input);
+
+    const reverse = pool.tokens[0].index === tokenIn.index ? false : true;
+
+    const _input = fractionalToBN(input, tokenIn.wei);
+
+    const precision = 30;
+
+    //precision of calculation
+    const precision_multiplier = new BN(10).pow(new BN(precision));
+
+    const fee = new BN(1024).mul(precision_multiplier).div(new BN(1021));
+
+    //calculation for output token (x = yout * poolX / poolY - yOut)
+    let amt = _input
+      .mul(new BN(reverse ? pool.amount1! : pool.amount0!))
+      .mul(fee)
+      .div(
+        new BN(reverse ? pool.amount0! : pool.amount1!)
+          .sub(_input)
+          .mul(precision_multiplier)
+      );
+    setPayCb(fromPreciseWeiRepr(amt, tokenOut.wei).amount);
+  } catch (err: any) {
+    error(err.message);
+  }
+}
