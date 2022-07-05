@@ -180,4 +180,9 @@ export const errorMapping = [
     index: 35,
     message: "InvalidNFTIndex error.",
   },
+  {
+    type: "InvalidAmountRatio",
+    index: 36,
+    message: "Invalid ratio supplied for this transaction.",
+  },
 ];
