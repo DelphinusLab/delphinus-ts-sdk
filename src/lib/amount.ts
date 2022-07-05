@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { TokenInfoFull } from "./type";
+import { TokenInfoFull, PoolInfo } from "./type";
 
 export interface Amount {
   wei: number;
@@ -156,6 +156,7 @@ export enum PoolOp {
 export function setInputAmount(
   input: string,
   op: PoolOp,
+  pool: PoolInfo,
   token0: TokenInfoFull,
   token1: TokenInfoFull,
   liquid0: BN,
@@ -168,14 +169,20 @@ export function setInputAmount(
   error: (err: string) => void
 ) {
   try {
+    //check if token inputs are reversed (ie token1 is on top)
+    const reverse = pool.tokens[0].index === token0.index ? false : true;
     //convert initial input to BN
     const _input = fractionalToBN(input, token0.wei);
     const precision = 30;
     //Choose to use ratio or inverted ratio depending on input token 0 or 1
+
     const preciseRatio = fractionalToBN(
-      inverse ? inversePoolRatio : poolRatio,
+      (inverse && !reverse) || (!inverse && reverse)
+        ? inversePoolRatio
+        : poolRatio,
       precision
     );
+
     //precision of calculation
     const precision_multiplier = new BN(10).pow(new BN(precision));
 
@@ -190,17 +197,22 @@ export function setInputAmount(
     if (!mod.isZero()) {
       //depending on side of pool, add 1 or leave natural to round up or down
       if (op === PoolOp.Retrieve) {
-        inverse ? (amt = amt) : (amt = amt.add(new BN(1)));
+        (inverse && !reverse) || (!inverse && reverse)
+          ? (amt = amt)
+          : (amt = amt.add(new BN(1)));
       }
       if (op === PoolOp.Supply) {
-        inverse ? (amt = amt.add(new BN(1))) : (amt = amt);
+        (inverse && !reverse) || (!inverse && reverse)
+          ? (amt = amt.add(new BN(1)))
+          : (amt = amt);
       }
     }
     //Check the pool ratio will fulfull inputX*PoolY - inputY*PoolX >= 0
+    //where liquid0 and liquid1 are pool amounts
     if (liquid0 && liquid1) {
       let _in = fractionalToBN(input, token0.wei);
       if (op === PoolOp.Retrieve) {
-        if (inverse) {
+        if ((inverse && !reverse) || (!inverse && reverse)) {
           let check = _in.mul(liquid1).sub(amt.mul(liquid0)).gte(new BN(0));
           console.log(check, "check if valid inputs");
         } else {
@@ -209,7 +221,7 @@ export function setInputAmount(
         }
       }
       if (op === PoolOp.Supply) {
-        if (inverse) {
+        if ((inverse && !reverse) || (!inverse && reverse)) {
           let check = amt.mul(liquid0).sub(_in.mul(liquid1)).gte(new BN(0));
           console.log(check, "check if valid inputs");
         } else {
