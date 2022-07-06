@@ -147,6 +147,27 @@ export function getPoolRatioAmount(
   return ratio;
 }
 
+export function getSlippageAmount(
+  amount: string,
+  wei: number,
+  slippage: string,
+  increase: boolean
+): string {
+  let precision = 30;
+  let input = fractionalToBN(amount, wei);
+  let _precision = new BN(10).pow(new BN(precision));
+  let slippageBN = fractionalToBN(slippage, precision - 2); // - 2 due to converting from %
+
+  if (increase) {
+    slippageBN = _precision.add(slippageBN);
+    console.log(_precision.toString(), slippageBN.toString(), "slippage");
+  } else {
+    slippageBN = _precision.sub(slippageBN);
+    console.log(_precision.toString(), slippageBN.toString(), "slippage");
+  }
+  return input.mul(slippageBN).div(_precision).toString();
+}
+
 export enum PoolOp {
   Supply,
   Retrieve,
