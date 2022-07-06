@@ -113,12 +113,13 @@ export function fractionalToBN(num: string, wei: number): BN {
   return full;
 }
 
+export const precision = 30;
+
 export function getPoolRatioAmount(
   liquid0: BN,
   liquid1: BN,
   wei0: number,
-  wei1: number,
-  precision: number
+  wei1: number
 ): BN | undefined {
   if (liquid0.isZero() && liquid1.isZero()) {
     //if pool is 0,0 liquidity, ratio is undefined
@@ -153,7 +154,6 @@ export function getSlippageAmount(
   slippage: string,
   increase: boolean
 ): string {
-  let precision = 30;
   let input = fractionalToBN(amount, wei);
   let _precision = new BN(10).pow(new BN(precision));
   let slippageBN = fractionalToBN(slippage, precision - 2); // - 2 due to converting from %
@@ -194,7 +194,7 @@ export function setInputAmount(
     const reverse = pool.tokens[0].index === token0.index ? false : true;
     //convert initial input to BN
     const _input = fractionalToBN(input, token0.wei);
-    const precision = 30;
+
     //Choose to use ratio or inverted ratio depending on input token 0 or 1
 
     const preciseRatio = fractionalToBN(
@@ -282,7 +282,6 @@ export function setSwapAmount(
 
     const _input = fractionalToBN(input, tokenIn.wei);
     console.log(pool.amount1, pool.amount0, "poolamounts");
-    const precision = 30;
 
     //precision of calculation
     const precision_multiplier = new BN(10).pow(new BN(precision));
@@ -320,8 +319,6 @@ export function setRequiredAmount(
     const reverse = pool.tokens[0].index === tokenIn.index ? false : true;
 
     const _input = fractionalToBN(input, tokenIn.wei);
-
-    const precision = 30;
 
     //precision of calculation
     const precision_multiplier = new BN(10).pow(new BN(precision));
