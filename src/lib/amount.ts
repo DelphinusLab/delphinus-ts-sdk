@@ -334,6 +334,10 @@ export function setRequiredAmount(
           .sub(_input)
           .mul(precision_multiplier)
       );
+    if (amt.lt(new BN(0))) {
+      throw Error("Not enough liquidity to cover the required amount");
+    }
+    console.log(amt.toString(), "amt");
     setPayCb(fromPreciseWeiRepr(amt, tokenOut.wei).amount);
   } catch (err: any) {
     error(err.message);
