@@ -1,5 +1,6 @@
 import BN from "bn.js";
-import { TokenInfo } from "./type";
+import { TokenInfoFull, PoolInfo } from "./type";
+
 export interface Amount {
   wei: number;
   amount: string;
@@ -72,7 +73,7 @@ function getMultiplier(decimals: number): string {
   throw new Error("Invalid decimal value");
 }
 
-function fractionalToBN(num: string, wei: number): BN {
+export function fractionalToBN(num: string, wei: number): BN {
   let multiplier = getMultiplier(wei);
 
   const negative = num.substring(0, 1) === "-";
@@ -110,4 +111,235 @@ function fractionalToBN(num: string, wei: number): BN {
   const full = new BN(whole).mul(new BN(multiplier)).add(new BN(fraction));
 
   return full;
+}
+
+export const precision = 30;
+
+export function getPoolRatioAmount(
+  liquid0: BN,
+  liquid1: BN,
+  wei0: number,
+  wei1: number
+): BN | undefined {
+  if (liquid0.isZero() && liquid1.isZero()) {
+    //if pool is 0,0 liquidity, ratio is undefined
+    return undefined;
+  }
+  if (liquid0.isZero() || liquid1.isZero()) {
+    //TODO: handle this case where one pool is 0
+    return undefined;
+  }
+  console.log(liquid0.toString(), liquid1.toString());
+  //This is the precision of the pool ratio to return, currently set to 15 as it is the max precision of Javascript roughly
+  let _precision = new BN(10).pow(new BN(precision));
+  let mult0 = new BN(10).pow(new BN(wei0));
+  let mult1 = new BN(10).pow(new BN(wei1));
+
+  //equalize the units of both liquidity pools
+  const lrg0 = liquid0.mul(new BN(mult1));
+  const lrg1 = liquid1.mul(new BN(mult0));
+
+  console.log(lrg0.toString(), lrg1.toString());
+
+  const ratio = lrg0.mul(_precision).div(lrg1);
+
+  console.log(ratio.toString(), "ratio of pool");
+
+  return ratio;
+}
+
+export function getSlippageAmount(
+  amount: string,
+  wei: number,
+  slippage: string,
+  increase: boolean
+): string {
+  let input = fractionalToBN(amount, wei);
+  let _precision = new BN(10).pow(new BN(precision));
+  let slippageBN = fractionalToBN(slippage, precision - 2); // - 2 due to converting from %
+
+  if (increase) {
+    slippageBN = _precision.add(slippageBN);
+    console.log(_precision.toString(), slippageBN.toString(), "slippage");
+  } else {
+    slippageBN = _precision.sub(slippageBN);
+    console.log(_precision.toString(), slippageBN.toString(), "slippage");
+  }
+  return fromPreciseWeiRepr(input.mul(slippageBN).div(_precision), wei).amount;
+}
+
+export enum PoolOp {
+  Supply,
+  Retrieve,
+  Swap,
+}
+
+export function setInputAmount(
+  input: string,
+  op: PoolOp,
+  pool: PoolInfo,
+  token0: TokenInfoFull,
+  token1: TokenInfoFull,
+  liquid0: BN,
+  liquid1: BN,
+  poolRatio: string,
+  inversePoolRatio: string,
+  inverse: boolean,
+  setAmt0Cb: (amt: string) => void,
+  setAmt1Cb: (amt: string) => void,
+  error: (err: string) => void
+) {
+  try {
+    //check if token inputs are reversed (ie token1 is on top)
+    const reverse = pool.tokens[0].index === token0.index ? false : true;
+    //convert initial input to BN
+    const _input = fractionalToBN(input, token0.wei);
+
+    //Choose to use ratio or inverted ratio depending on input token 0 or 1
+
+    const preciseRatio = fractionalToBN(
+      (inverse && !reverse) || (!inverse && reverse)
+        ? inversePoolRatio
+        : poolRatio,
+      precision
+    );
+
+    //precision of calculation
+    const precision_multiplier = new BN(10).pow(new BN(precision));
+
+    //rough calculated amount for other token (inverse)
+    let amt = _input.mul(preciseRatio).div(precision_multiplier);
+
+    //modulous of the above calculation to ensure rounding is met
+    let mod = _input.mul(preciseRatio).mod(precision_multiplier);
+    console.log(amt.toString(), mod.toString(), "amt, mod");
+
+    //round the last digit to account for error and keep pool ratio as expected
+    if (!mod.isZero()) {
+      //depending on side of pool, add 1 or leave natural to round up or down
+      if (op === PoolOp.Retrieve) {
+        (inverse && !reverse) || (!inverse && reverse)
+          ? (amt = amt)
+          : (amt = amt.add(new BN(1)));
+      }
+      if (op === PoolOp.Supply) {
+        (inverse && !reverse) || (!inverse && reverse)
+          ? (amt = amt.add(new BN(1)))
+          : (amt = amt);
+      }
+    }
+    //Check the pool ratio will fulfull inputX*PoolY - inputY*PoolX >= 0
+    //where liquid0 and liquid1 are pool amounts
+    if (liquid0 && liquid1) {
+      let _in = fractionalToBN(input, token0.wei);
+      if (op === PoolOp.Retrieve) {
+        if ((inverse && !reverse) || (!inverse && reverse)) {
+          let check = _in.mul(liquid1).sub(amt.mul(liquid0)).gte(new BN(0));
+          console.log(check, "check if valid inputs");
+        } else {
+          let check = amt.mul(liquid1).sub(_in.mul(liquid0)).gte(new BN(0));
+          console.log(check, "check if valid inputs");
+        }
+      }
+      if (op === PoolOp.Supply) {
+        if ((inverse && !reverse) || (!inverse && reverse)) {
+          let check = amt.mul(liquid0).sub(_in.mul(liquid1)).gte(new BN(0));
+          console.log(check, "check if valid inputs");
+        } else {
+          let check = _in.mul(liquid0).sub(amt.mul(liquid1)).gte(new BN(0));
+          console.log(check, "check if valid inputs");
+        }
+      }
+    }
+    //set input amounts for user
+    if (inverse) {
+      setAmt0Cb(input);
+
+      setAmt1Cb(fromPreciseWeiRepr(amt, token1.wei).amount);
+    } else {
+      setAmt1Cb(input);
+
+      setAmt0Cb(fromPreciseWeiRepr(amt, token0.wei).amount);
+    }
+  } catch (err: any) {
+    error(err.message);
+  }
+}
+
+export function setSwapAmount(
+  input: string,
+  pool: PoolInfo,
+  tokenIn: TokenInfoFull,
+  tokenOut: TokenInfoFull,
+  setPayCb: (amt: string) => void,
+  setGetCb: (amt: string) => void,
+  error: (err: string) => void
+) {
+  try {
+    setPayCb(input);
+
+    const reverse = pool.tokens[0].index === tokenIn.index ? false : true;
+
+    const _input = fractionalToBN(input, tokenIn.wei);
+    console.log(pool.amount1, pool.amount0, "poolamounts");
+
+    //precision of calculation
+    const precision_multiplier = new BN(10).pow(new BN(precision));
+
+    const fee = new BN(1021).mul(precision_multiplier).div(new BN(1024));
+
+    //calculation for output token
+    let amt = _input
+      .mul(new BN(reverse ? pool.amount0! : pool.amount1!))
+      .mul(fee)
+      .div(
+        _input
+          .add(new BN(reverse ? pool.amount1! : pool.amount0!))
+          .mul(precision_multiplier)
+      );
+
+    setGetCb(fromPreciseWeiRepr(amt, tokenOut.wei).amount);
+  } catch (err: any) {
+    error(err.message);
+  }
+}
+
+export function setRequiredAmount(
+  input: string,
+  pool: PoolInfo,
+  tokenIn: TokenInfoFull,
+  tokenOut: TokenInfoFull,
+  setPayCb: (amt: string) => void,
+  setGetCb: (amt: string) => void,
+  error: (err: string) => void
+) {
+  try {
+    setGetCb(input);
+
+    const reverse = pool.tokens[0].index === tokenIn.index ? false : true;
+
+    const _input = fractionalToBN(input, tokenIn.wei);
+
+    //precision of calculation
+    const precision_multiplier = new BN(10).pow(new BN(precision));
+
+    const fee = new BN(1024).mul(precision_multiplier).div(new BN(1021));
+
+    //calculation for output token (x = yout * poolX / poolY - yOut)
+    let amt = _input
+      .mul(new BN(reverse ? pool.amount1! : pool.amount0!))
+      .mul(fee)
+      .div(
+        new BN(reverse ? pool.amount0! : pool.amount1!)
+          .sub(_input)
+          .mul(precision_multiplier)
+      );
+    if (amt.lt(new BN(0))) {
+      throw Error("Not enough liquidity to cover the required amount");
+    }
+    console.log(amt.toString(), "amt");
+    setPayCb(fromPreciseWeiRepr(amt, tokenOut.wei).amount);
+  } catch (err: any) {
+    error(err.message);
+  }
 }
