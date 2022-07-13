@@ -165,7 +165,7 @@ export function getSlippageAmount(
     slippageBN = _precision.sub(slippageBN);
     console.log(_precision.toString(), slippageBN.toString(), "slippage");
   }
-  return input.mul(slippageBN).div(_precision).toString();
+  return fromPreciseWeiRepr(input.mul(slippageBN).div(_precision), wei).amount;
 }
 
 export enum PoolOp {
