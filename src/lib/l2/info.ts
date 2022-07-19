@@ -92,7 +92,8 @@ export async function queryPoolShare(
 
     const pair = [accountIndex, poolIndex];
     const share = await api.query.swapModule.shareMap(pair);
-    callback(share.toString());
+    const shareBN = stringNumberToBN(share.toString());
+    callback(shareBN.toString());
   } catch (e: any) {
     callback("failed");
   }
