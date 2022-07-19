@@ -51,3 +51,12 @@ export async function updateGasInfo(accountInfo: SubstrateAccountInfo): Promise<
   };
 }
 
+//As wei maybe 18 so it is very likely the amount in B/E will return value exceed max_safe_integer of javascript
+//In this case, polkadot API's result from toJSON will return hex number string
+export function stringNumberToBN(num: string): BN {
+  if(num.startsWith("0x"))
+    return new BN(num, "hex");
+  else
+    return new BN(num, 10);
+}
+
