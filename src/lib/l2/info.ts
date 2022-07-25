@@ -2,6 +2,7 @@ import BN from "bn.js";
 import { getTokenIndex as getTokenIndexFromDeploy } from "delphinus-deployment/src/token-index";
 import { getAPI, getCryptoUtil, stringToBN } from "./api";
 import { SubstrateAccountInfo } from "../type";
+import { stringNumberToBN } from "./utils";
 
 /* ------------ Query ------------ */
 export function compressToken(chainId: string, token: string, query = false) {
@@ -63,7 +64,9 @@ export async function queryPoolAmount(
     const api = await getAPI();
     const raw = await api.query.swapModule.poolMap(poolIndex);
     const result = raw.toJSON() as number[];
-    callback(result[2].toString(), result[3].toString());
+    const amount0 = stringNumberToBN(result[2].toString());
+    const amount1 = stringNumberToBN(result[3].toString());
+    callback(amount0.toString(), amount1.toString());
   } catch (e: any) {
     callback("failed", "failed");
   }
@@ -89,7 +92,8 @@ export async function queryPoolShare(
 
     const pair = [accountIndex, poolIndex];
     const share = await api.query.swapModule.shareMap(pair);
-    callback(share.toString());
+    const shareBN = stringNumberToBN(share.toString());
+    callback(shareBN.toString());
   } catch (e: any) {
     callback("failed");
   }

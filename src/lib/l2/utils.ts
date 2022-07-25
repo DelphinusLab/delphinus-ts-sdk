@@ -51,3 +51,11 @@ export async function updateGasInfo(accountInfo: SubstrateAccountInfo): Promise<
   };
 }
 
+//In some big number scenario polkadot API's result from toJSON will return hex number string instead of number string
+export function stringNumberToBN(num: string): BN {
+  if(num.startsWith("0x"))
+    return new BN(num.slice(2), "hex");
+  else
+    return new BN(num, 10);
+}
+
