@@ -1,6 +1,7 @@
 import * as Amount from "../src/lib/amount";
 import BN from "bn.js";
 import { TokenInfo } from "../src/lib/type";
+import { getPercentageBN } from "../src/lib/helpers/helper";
 
 describe("test fromPreciseWeiRepr", () => {
   test("General number case", () => {
@@ -66,10 +67,7 @@ describe("test fromPreciseWeiRepr", () => {
   });
 
   test("no fraction case", () => {
-    let res: Amount.Amount = Amount.fromPreciseWeiRepr(
-      new BN("1000000"),
-      2
-    );
+    let res: Amount.Amount = Amount.fromPreciseWeiRepr(new BN("1000000"), 2);
     expect(res).toEqual({
       wei: 2,
       amount: "10000",
@@ -77,7 +75,6 @@ describe("test fromPreciseWeiRepr", () => {
       input: false,
     });
   });
-
 });
 
 describe("test toAmountInput", () => {
@@ -145,5 +142,22 @@ describe("test toAmountInput", () => {
     }
 
     expect(toAmountInputThrow).toThrow();
+  });
+});
+
+describe("test getPercentageBN", () => {
+  let precision = 1000000;
+  test("percentage 0", () => {
+    let res: string = getPercentageBN(new BN(100), new BN(0), precision);
+    expect(res).toEqual("0.00%");
+  });
+  test("percentage 100", () => {
+    let res: string = getPercentageBN(new BN(100), new BN(100), precision);
+    expect(res).toEqual("100.00%");
+  });
+
+  test("percentage 3.14", () => {
+    let res: string = getPercentageBN(new BN(314), new BN(10000), precision);
+    expect(res).toEqual("3.14%");
   });
 });
