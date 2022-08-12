@@ -356,7 +356,7 @@ export function setRequiredAmount(
 export function calcToken1ShareAmount(pool: PoolInfo) {
   //calculate token1 share based off token0 share
   const precision_multiplier = new BN(10).pow(new BN(precision));
-  if (!pool.amount0) {
+  if (!pool.amount0 || pool.amount0 === "0") {
     return new BN(0);
   }
   let amt = new BN(pool.share!)
