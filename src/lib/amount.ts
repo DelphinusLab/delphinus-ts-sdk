@@ -194,24 +194,28 @@ export function setInputAmount(
     const reverse = pool.tokens[0].index === token0.index ? false : true;
 
     //inverse for UI input top token section, reverse for whether the top/bottom token sections are aligned with pool token
-    const isInputPoolToken0 : boolean  = (inverse && !reverse) || (!inverse && reverse);
+    const isInputPoolToken0: boolean =
+      (inverse && !reverse) || (!inverse && reverse);
 
     //convert initial input to BN
-    const _input = fractionalToBN(input,  isInputPoolToken0 ? token0.wei : token1.wei);
+    const _input = fractionalToBN(
+      input,
+      isInputPoolToken0 ? token0.wei : token1.wei
+    );
 
     //Choose to use ratio or inverted ratio depending on input token 0 or 1
 
     const preciseRatio = fractionalToBN(
-      isInputPoolToken0
-        ? inversePoolRatio
-        : poolRatio,
+      isInputPoolToken0 ? inversePoolRatio : poolRatio,
       precision
     );
 
     //The poolRatio and inversePoolRatio are displaying pool liquids ratio which had divided wei. Thus need convert to B/E pool ratio
     const token0Multiplier = new BN(10).pow(new BN(token0.wei));
     const token1Multiplier = new BN(10).pow(new BN(token1.wei));
-    const preciseRatioBE = isInputPoolToken0 ? preciseRatio.mul(token1Multiplier).div(token0Multiplier) : preciseRatio.mul(token0Multiplier).div(token1Multiplier);
+    const preciseRatioBE = isInputPoolToken0
+      ? preciseRatio.mul(token1Multiplier).div(token0Multiplier)
+      : preciseRatio.mul(token0Multiplier).div(token1Multiplier);
 
     //precision of calculation
     const precision_multiplier = new BN(10).pow(new BN(precision));
@@ -227,14 +231,10 @@ export function setInputAmount(
     if (!mod.isZero()) {
       //depending on side of pool, add 1 or leave natural to round up or down
       if (op === PoolOp.Retrieve) {
-	isInputPoolToken0
-          ? (amt = amt)
-          : (amt = amt.add(new BN(1)));
+        isInputPoolToken0 ? (amt = amt) : (amt = amt.add(new BN(1)));
       }
       if (op === PoolOp.Supply) {
-	isInputPoolToken0
-          ? (amt = amt.add(new BN(1)))
-          : (amt = amt);
+        isInputPoolToken0 ? (amt = amt.add(new BN(1))) : (amt = amt);
       }
     }
     //Check the pool ratio will fulfull inputX*PoolY - inputY*PoolX >= 0
@@ -251,7 +251,7 @@ export function setInputAmount(
         }
       }
       if (op === PoolOp.Supply) {
-        if ((isInputPoolToken0)) {
+        if (isInputPoolToken0) {
           let check = amt.mul(liquid0).sub(_in.mul(liquid1)).gte(new BN(0));
           console.log(check, "check if valid inputs");
         } else {
@@ -351,4 +351,20 @@ export function setRequiredAmount(
   } catch (err: any) {
     error(err.message);
   }
+}
+
+export function calcToken1ShareAmount(pool: PoolInfo) {
+  //calculate token1 share based off token0 share
+  const precision_multiplier = new BN(10).pow(new BN(precision));
+  if (!pool.amount0 || pool.amount0 === "0") {
+    return new BN(0);
+  }
+  let amt = new BN(pool.share!)
+    .mul(precision_multiplier)
+    .div(new BN(pool.amount0!))
+    .mul(new BN(pool.amount1!))
+    .div(precision_multiplier);
+  console.log(amt.toString(), "TOKEN1 SHARE");
+
+  return amt;
 }
