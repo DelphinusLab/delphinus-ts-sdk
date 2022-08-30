@@ -49,6 +49,7 @@ export interface TokenInfoFull {
 export interface PoolInfo {
   id: number;
   tokens: TokenInfoFull[];
+  totalShare?: string;
   share?: string;
   amount0?: string;
   amount1?: string;

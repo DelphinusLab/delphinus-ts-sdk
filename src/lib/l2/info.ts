@@ -41,24 +41,24 @@ export async function queryL2Nonce(accountAddress: string) {
 export async function queryTokenAmount(
   l2Account: SubstrateAccountInfo,
   chainId: string,
-  tokenAddress: string,
+  tokenAddress: string
 ) {
-    const api = await getAPI();
-    const accountAddress = l2Account.address;
-    const accountIndex = await queryAccountIndex(accountAddress);
-    if (accountIndex === "") {
-      return 0;
-    }
+  const api = await getAPI();
+  const accountAddress = l2Account.address;
+  const accountIndex = await queryAccountIndex(accountAddress);
+  if (accountIndex === "") {
+    return 0;
+  }
 
-    const tokenIndex = getTokenIndex(chainId, tokenAddress);
-    const pair = [accountIndex, tokenIndex];
-    const result = await api.query.swapModule.balanceMap(pair);
-    return result;
+  const tokenIndex = getTokenIndex(chainId, tokenAddress);
+  const pair = [accountIndex, tokenIndex];
+  const result = await api.query.swapModule.balanceMap(pair);
+  return result;
 }
 
 export async function queryPoolAmount(
   poolIndex: number,
-  callback: (v1: string, v2: string) => void
+  callback: (v1: string, v2: string, v3: string) => void
 ) {
   try {
     const api = await getAPI();
@@ -66,9 +66,11 @@ export async function queryPoolAmount(
     const result = raw.toJSON() as number[];
     const amount0 = stringNumberToBN(result[2].toString());
     const amount1 = stringNumberToBN(result[3].toString());
-    callback(amount0.toString(), amount1.toString());
+    const amount2 = stringNumberToBN(result[4].toString());
+
+    callback(amount0.toString(), amount1.toString(), amount2.toString());
   } catch (e: any) {
-    callback("failed", "failed");
+    callback("failed", "failed", "failed");
   }
 }
 
