@@ -359,7 +359,12 @@ export function calcToken1ShareAmount(pool: PoolInfo) {
   if (!pool.amount0 || pool.amount0 === "0") {
     return new BN(0);
   }
-  let amt = new BN(pool.share!)
+  let token0Share = getUserTokenShare(
+    new BN(pool.share!),
+    new BN(pool.totalShare!),
+    new BN(pool.amount0!)
+  );
+  let amt = token0Share
     .mul(precision_multiplier)
     .div(new BN(pool.amount0!))
     .mul(new BN(pool.amount1!))
@@ -367,4 +372,15 @@ export function calcToken1ShareAmount(pool: PoolInfo) {
   console.log(amt.toString(), "TOKEN1 SHARE");
 
   return amt;
+}
+
+export function getUserTokenShare(userShare: BN, poolShare: BN, liq0: BN) {
+  if (liq0.isZero() || userShare.isZero() || poolShare.isZero())
+    return new BN(0);
+  const precision_multiplier = new BN(10).pow(new BN(precision));
+  return userShare
+    .mul(precision_multiplier)
+    .mul(liq0)
+    .div(poolShare)
+    .div(precision_multiplier);
 }
