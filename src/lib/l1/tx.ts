@@ -47,7 +47,7 @@ export async function deposit(
             progress("approve", "Transaction Sent", tx, 20)
           )
           .when("Approve", "receipt", (tx: any) =>
-            progress("approve", "Done", tx.blockHash, 30)
+            progress("approve", "Done", tx.transactionHash, 30)
           )
           .when("snapshot", "Deposit", () => {
             progress("approve", "Done", "", 40);
@@ -58,7 +58,7 @@ export async function deposit(
             progress("desposit", "Transaction Sent", tx, 50);
           })
           .when("Deposit", "receipt", (tx: any) =>
-            progress("deposit", "Done", tx.blockHash, 70)
+            progress("deposit", "Done", tx.transactionHash, 70)
           );
         let tx = await r;
         console.log(tx);
@@ -120,7 +120,7 @@ export async function faucet(
         r.when("Mint", "transactionHash", (tx: string) =>
           progress("mint", "Transaction Sent", tx, 20)
         ).when("Mint", "receipt", (tx: any) =>
-          progress("mint", "Done", tx.blockHash, 100)
+          progress("mint", "Done", tx.transactionHash, 100)
         );
         let tx = await r;
       } catch (e: any) {
