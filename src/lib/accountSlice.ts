@@ -1,5 +1,5 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { SubstrateAccountInfo, L1AccountInfo } from './type';
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { SubstrateAccountInfo, L1AccountInfo } from "./type";
 import { loginL1Account, deriveL2Account } from "./l1/account";
 import { tryLoginL2Account, register, updateGasInfo } from "./l2/utils";
 import { queryAccountIndex } from "./l2/info";
@@ -7,7 +7,7 @@ import { queryAccountIndex } from "./l2/info";
 export interface AccountState {
   l1Account?: L1AccountInfo;
   l2Account?: SubstrateAccountInfo;
-  status: 'Loading' | 'L1AccountReady' | 'Ready';
+  status: "Loading" | "L1AccountReady" | "Ready";
 }
 
 export interface State {
@@ -15,7 +15,7 @@ export interface State {
 }
 
 const initialState: AccountState = {
-  status: 'Loading',
+  status: "Loading",
 };
 
 // The function below is called a thunk and allows us to perform async logic. It
@@ -24,29 +24,32 @@ const initialState: AccountState = {
 // code can then be executed and other actions can be dispatched. Thunks are
 // typically used to make async requests.
 export const loginL1AccountAsync = createAsyncThunk(
-  'acccount/fetchAccount',
+  "account/fetchAccount",
   async (thunkApi) => {
     let account = await loginL1Account();
     return account;
   }
 );
 
-export const loginL2AccountAsync = createAsyncThunk<SubstrateAccountInfo, string>(
-  'acccount/deriveAccount',
-  async (l1account: string, thunkApi) => {
-    let derived = await deriveL2Account(l1account);
-    let account = await tryLoginL2Account(derived);
-    /*
+export const loginL2AccountAsync = createAsyncThunk<
+  SubstrateAccountInfo,
+  string
+>("account/deriveAccount", async (l1account: string, thunkApi) => {
+  let derived = await deriveL2Account(l1account);
+  let account = await tryLoginL2Account(derived);
+  /*
     await withBrowerWeb3(async (web3: DelphinusWeb3) => {
       return (web3 as Web3BrowsersMode).subscribeAccountChange(cb);
     });
     */
-    return account;
-  }
-);
+  return account;
+});
 
-export const registerL2AccountAsync = createAsyncThunk<SubstrateAccountInfo, SubstrateAccountInfo>(
-  'acccount/registerAccount',
+export const registerL2AccountAsync = createAsyncThunk<
+  SubstrateAccountInfo,
+  SubstrateAccountInfo
+>(
+  "account/registerAccount",
   async (l2account: SubstrateAccountInfo, thunkApi) => {
     /*
     await withBrowerWeb3(async (web3: DelphinusWeb3) => {
@@ -55,61 +58,65 @@ export const registerL2AccountAsync = createAsyncThunk<SubstrateAccountInfo, Sub
     */
     await register(l2account);
     let index = await queryAccountIndex(l2account.address);
-    let account = {...l2account, account:index};
+    let account = { ...l2account, account: index };
     return account;
   }
 );
 
-export const updateL2AccountGasAsync = createAsyncThunk<SubstrateAccountInfo, SubstrateAccountInfo>(
-  'acccount/updateL2AccountGas',
+export const updateL2AccountGasAsync = createAsyncThunk<
+  SubstrateAccountInfo,
+  SubstrateAccountInfo
+>(
+  "account/updateL2AccountGas",
   async (l2account: SubstrateAccountInfo, thunkApi) => {
     return await updateGasInfo(l2account);
   }
 );
 
-
 export const accountSlice = createSlice({
-  name: 'account',
+  name: "account",
   initialState,
   reducers: {
     setL1Account: (state, account) => {
       state.l1Account!.address = account.payload;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(loginL1AccountAsync.pending, (state) => {
-        state.status = 'Loading';
+        state.status = "Loading";
       })
       .addCase(loginL1AccountAsync.fulfilled, (state, c) => {
-        state.status = 'L1AccountReady';
+        state.status = "L1AccountReady";
         console.log(c);
         state.l1Account = c.payload;
       })
       .addCase(loginL2AccountAsync.pending, (state) => {
-        state.status = 'Loading';
+        state.status = "Loading";
       })
       .addCase(registerL2AccountAsync.fulfilled, (state, c) => {
-        state.status = 'Ready';
+        state.status = "Ready";
         console.log(c);
         state.l2Account = c.payload;
       })
       .addCase(loginL2AccountAsync.fulfilled, (state, c) => {
-        state.status = 'Ready';
+        state.status = "Ready";
         console.log(c);
         state.l2Account = c.payload;
       })
       .addCase(updateL2AccountGasAsync.fulfilled, (state, c) => {
-        state.status = 'Ready';
+        state.status = "Ready";
         console.log(c);
         state.l2Account = c.payload;
       });
-
   },
 });
 
-export const selectL1Account = <T extends State>(state: T) => state.account.l1Account;
-export const selectL2Account = <T extends State>(state: T) => state.account.l2Account;
-export const selectLoginStatus = <T extends State>(state: T) => state.account.status;
+export const selectL1Account = <T extends State>(state: T) =>
+  state.account.l1Account;
+export const selectL2Account = <T extends State>(state: T) =>
+  state.account.l2Account;
+export const selectLoginStatus = <T extends State>(state: T) =>
+  state.account.status;
 
 export default accountSlice.reducer;

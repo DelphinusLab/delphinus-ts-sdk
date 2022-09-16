@@ -1,16 +1,28 @@
-import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
-import accountReducer from '../lib/accountSlice';
+import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
+import accountReducer from "../lib/accountSlice";
 
 export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
         // Ignore these action types
-        ignoredActions: ['account/fetchAccount/fullfilled'],
+        ignoredActions: [
+          "account/fetchAccount/fulfilled",
+          "account/updateL2AccountGas/pending",
+          "account/updateL2AccountGas/fulfilled",
+        ],
         // Ignore these field paths in all actions
-        ignoredActionPaths: ['payload.web3','payload.seed', 'payload.injector'],
+        ignoredActionPaths: [
+          "payload.web3",
+          "payload.seed",
+          "payload.injector",
+        ],
         // Ignore these paths in the state
-        ignoredPaths: ['account.l1Account.web3', 'account.l2Account.seed', 'account.l2Account.injector'],
+        ignoredPaths: [
+          "account.l1Account.web3",
+          "account.l2Account.seed",
+          "account.l2Account.injector",
+        ],
       },
     }),
   reducer: {
