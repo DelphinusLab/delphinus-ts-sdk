@@ -42,9 +42,16 @@ export function capNumber(num: string, significantDigits: number = 8) {
       else break;
     }
     //show only the first significant digit past the zeros if too many zeros
-    if (parts[0] === "0") return "0" + "." + parts[1].substring(0, zeros + 1);
+    if (parts[0] === "0")
+      return "0" + "." + parts[1].substring(0, zeros + 1) + "...";
     //otherwise return capped number
-    return parts[0] + "." + parts[1].substring(0, decimalsToShow);
+    return (
+      parts[0] +
+      "." +
+      (zeros > decimalsToShow
+        ? +parts[1].substring(0, zeros + 1) + "..."
+        : parts[1].substring(0, decimalsToShow))
+    );
   }
   return num;
 }
