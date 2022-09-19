@@ -29,7 +29,6 @@ export function capNumber(num: string, significantDigits: number = 8) {
   if (num === undefined || num === null) return num;
 
   let parts = num.toString().split(".");
-  console.log(num, parts, "parts");
   if (parts[0].length > significantDigits) {
     return parts[0].substring(0, significantDigits);
   }
