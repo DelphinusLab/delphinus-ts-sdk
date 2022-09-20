@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { SubstrateAccountInfo } from "../type";
+import { SubstrateAccountInfo, L1AccountInfo } from "../type";
 import { L1Client, withL1Client } from "solidity/clients/client";
 import { getConfigByChainId } from "delphinus-deployment/src/config";
 import { L1ClientRole } from "delphinus-deployment/src/types";
@@ -95,6 +95,7 @@ export async function deposit(
 }
 
 export async function faucet(
+  l1Account: L1AccountInfo,
   chainId: string,
   tokenAddress: string, // hex without 0x prefix
   amount: Amount,
@@ -107,6 +108,9 @@ export async function faucet(
     true,
     async (l1client: L1Client) => {
       try {
+        if (l1client.getDefaultAccount() !== l1Account.address) {
+          throw new Error("The account is not the default account");
+        }
         let token_address = "0x" + tokenAddress;
         let tokenContract = l1client.getGasContract(token_address);
         let pbinder = new PromiseBinder();
