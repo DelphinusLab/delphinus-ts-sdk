@@ -8,7 +8,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import { SxProps, Theme } from "@mui/material/styles";
 import { styled } from "@mui/material/styles";
-
+import { capNumber } from "./helpers/helper";
 import Address from "./address";
 import { State } from "./accountSlice";
 
@@ -200,7 +200,8 @@ interface amountElementProps {
 export function AmountElement(props: amountElementProps) {
   if (props.amount) {
     let a = fromPreciseWeiRepr(props.amount, props.token.wei);
-    return <>{a.amount}</>;
+
+    return <>{capNumber(a.amount)}</>;
   } else {
     return <>loading...</>;
   }

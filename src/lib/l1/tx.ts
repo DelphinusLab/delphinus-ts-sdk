@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { SubstrateAccountInfo } from "../type";
+import { SubstrateAccountInfo, L1AccountInfo } from "../type";
 import { L1Client, withL1Client } from "solidity/clients/client";
 import { getConfigByChainId } from "delphinus-deployment/src/config";
 import { L1ClientRole } from "delphinus-deployment/src/types";
@@ -14,6 +14,7 @@ function timeout(ms: number) {
 }
 
 export async function deposit(
+  l1Account: L1AccountInfo,
   l2Account: SubstrateAccountInfo,
   chainId: string,
   tokenAddress: string, // hex without 0x prefix
@@ -29,6 +30,7 @@ export async function deposit(
     true,
     async (l1client: L1Client) => {
       try {
+        checkL1Account(l1client, l1Account);
         let token_address = "0x" + tokenAddress;
         let l2account = ss58.addressToAddressId(accountAddress);
         let tokenContract = l1client.getTokenContract(token_address);
@@ -95,6 +97,7 @@ export async function deposit(
 }
 
 export async function faucet(
+  l1Account: L1AccountInfo,
   chainId: string,
   tokenAddress: string, // hex without 0x prefix
   amount: Amount,
@@ -107,6 +110,7 @@ export async function faucet(
     true,
     async (l1client: L1Client) => {
       try {
+        checkL1Account(l1client, l1Account);
         let token_address = "0x" + tokenAddress;
         let tokenContract = l1client.getGasContract(token_address);
         let pbinder = new PromiseBinder();
@@ -128,4 +132,10 @@ export async function faucet(
       }
     }
   );
+}
+
+function checkL1Account(l1client: L1Client, l1Account: L1AccountInfo) {
+  if (l1client.getDefaultAccount() !== l1Account.address) {
+    throw new Error("The Metamask account is not the default account");
+  }
 }
