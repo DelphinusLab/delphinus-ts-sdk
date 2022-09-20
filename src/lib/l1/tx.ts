@@ -30,9 +30,7 @@ export async function deposit(
     true,
     async (l1client: L1Client) => {
       try {
-        if (l1client.getDefaultAccount() !== l1Account.address) {
-          throw new Error("The Metamask account is not the default account");
-        }
+        checkL1Account(l1client, l1Account);
         let token_address = "0x" + tokenAddress;
         let l2account = ss58.addressToAddressId(accountAddress);
         let tokenContract = l1client.getTokenContract(token_address);
@@ -112,9 +110,7 @@ export async function faucet(
     true,
     async (l1client: L1Client) => {
       try {
-        if (l1client.getDefaultAccount() !== l1Account.address) {
-          throw new Error("The Metamask account is not the default account");
-        }
+        checkL1Account(l1client, l1Account);
         let token_address = "0x" + tokenAddress;
         let tokenContract = l1client.getGasContract(token_address);
         let pbinder = new PromiseBinder();
@@ -136,4 +132,10 @@ export async function faucet(
       }
     }
   );
+}
+
+function checkL1Account(l1client: L1Client, l1Account: L1AccountInfo) {
+  if (l1client.getDefaultAccount() !== l1Account.address) {
+    throw new Error("The Metamask account is not the default account");
+  }
 }
