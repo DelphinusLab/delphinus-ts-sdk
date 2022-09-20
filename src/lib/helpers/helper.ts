@@ -29,7 +29,7 @@ export function capNumber(num: string, significantDigits: number = 8) {
   if (num === undefined || num === null) return num;
 
   let parts = num.toString().split(".");
-  if (parts[0].length > significantDigits) {
+  if (parts[0].length >= significantDigits) {
     return parts[0].substring(0, significantDigits);
   }
   let decimalsToShow = significantDigits - parts[0].length;
@@ -41,15 +41,12 @@ export function capNumber(num: string, significantDigits: number = 8) {
       if (parts[1][i] === "0") zeros++;
       else break;
     }
-    //show only the first significant digit past the zeros if too many zeros
-    if (parts[0] === "0")
-      return "0" + "." + parts[1].substring(0, zeros + 1) + "...";
-    //otherwise return capped number
+
     return (
       parts[0] +
       "." +
-      (zeros > decimalsToShow
-        ? +parts[1].substring(0, zeros + 1) + "..."
+      (zeros > decimalsToShow && parts[0] === "0"
+        ? parts[1].substring(0, zeros + 1) + "..."
         : parts[1].substring(0, decimalsToShow))
     );
   }
