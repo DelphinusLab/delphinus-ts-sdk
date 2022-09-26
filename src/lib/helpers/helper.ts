@@ -1,12 +1,18 @@
 import BN from "bn.js";
 export const encodeNum = (num: any) => {
   if (num === undefined || num === null) return num;
-  var parts = num.toString().split(".");
+  let decimalIndex = num.toString().indexOf(".");
+  var whole = num
+    .toString()
+    .substring(0, decimalIndex > -1 ? decimalIndex : num.toString().length);
+  let decimal =
+    decimalIndex > -1 // No decimal places found
+      ? num.toString().substring(decimalIndex + 1, num.toString().length)
+      : "";
   //trim leading 0s
-  parts[0] = parts[0].replace(/^0+/, "") ? parts[0] : "0";
+  whole = whole.replace(/^0+/, "") ? whole : "0";
   return (
-    parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") +
-    (parts[1] ? "." + parts[1] : "")
+    whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (decimal ? "." + decimal : "")
   );
 };
 
@@ -30,7 +36,7 @@ export function capNumber(num: string, significantDigits: number = 8) {
 
   let parts = num.toString().split(".");
   if (parts[0].length >= significantDigits) {
-    return parts[0].substring(0, significantDigits);
+    return parts[0];
   }
   let decimalsToShow = significantDigits - parts[0].length;
 

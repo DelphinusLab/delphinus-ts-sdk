@@ -1,7 +1,11 @@
 import * as Amount from "../src/lib/amount";
 import BN from "bn.js";
 import { TokenInfo } from "../src/lib/type";
-import { getPercentageBN, capNumber } from "../src/lib/helpers/helper";
+import {
+  getPercentageBN,
+  capNumber,
+  encodeNum,
+} from "../src/lib/helpers/helper";
 
 describe("test fromPreciseWeiRepr", () => {
   test("General number case", () => {
@@ -176,7 +180,7 @@ describe("test capNumber", () => {
   });
   test("number 987654321.123456789", () => {
     let res: string = capNumber("987654321.123456789");
-    expect(res).toEqual("98765432");
+    expect(res).toEqual("987654321");
   });
   test("number 500.123456789123456789", () => {
     let res: string = capNumber("500.123456789123456789");
@@ -185,5 +189,22 @@ describe("test capNumber", () => {
   test("number 500.000000000123456789", () => {
     let res: string = capNumber("500.000000000123456789");
     expect(res).toEqual("500.00000");
+  });
+});
+
+describe("test encodeNum", () => {
+  test("number 0.099999002939658104", () => {
+    let res: string = encodeNum("0.099999002939658104");
+    expect(res).toEqual("0.099999002939658104");
+  });
+
+  test("number 9999999990.099999002939658104", () => {
+    let res: string = encodeNum("9999999990.099999002939658104");
+    expect(res).toEqual("9,999,999,990.099999002939658104");
+  });
+
+  test("capped number 9999999990.099999002939658104", () => {
+    let res: string = encodeNum(capNumber("9999999990.099999002939658104"));
+    expect(res).toEqual("9,999,999,990");
   });
 });
