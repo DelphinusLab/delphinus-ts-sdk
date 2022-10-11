@@ -118,3 +118,68 @@ export async function getPoolList() {
   }
   return poolInfo;
 }
+
+export async function getTransactionHistory() {
+  const api = await getAPI();
+  const signedBlock = await api.rpc.chain.getBlock();
+  console.log(signedBlock, "latest block");
+  console.log(signedBlock.block.header.number.toHex(), "block number");
+  //api.at is newer package version
+  // const apiAt = await api.at(signedBlock.block.header.hash);
+  // signedBlock.block.extrinsics.forEach((ex, index) => {
+  //   // the extrinsics are decoded by the API, human-like view
+  //   console.log(index, ex.toHuman());
+
+  //   const {
+  //     isSigned,
+  //     meta,
+  //     method: { args, method, section },
+  //   } = ex;
+
+  //   // explicit display of name, args & documentation
+  //   console.log(
+  //     `${section}.${method}(${args.map((a) => a.toString()).join(", ")})`
+  //   );
+  //   console.log(meta.documentation.map((d) => d.toString()).join("\n"));
+
+  //   // signer/nonce info
+  //   if (isSigned) {
+  //     console.log(
+  //       `signer=${ex.signer.toString()}, nonce=${ex.nonce.toString()}`
+  //     );
+  //   }
+  // });
+  //FIRST 50 Blocks
+  for (let i = 50; i >= 0; i--) {
+    var hash = await api.rpc.chain.getBlockHash(i);
+    var events = await api.query.system.events.at(hash);
+    var timestamp = await api.query.timestamp.now.at(hash);
+    console.log(
+      `\n #${i} at timestamp: ${timestamp}, Received ${events.length} events:`
+    );
+
+    // loop through the Vec<EventRecord>
+    events.forEach((record) => {
+      // extract the phase, event and the event types
+      const { event, phase } = record;
+      const types = event.typeDef;
+
+      // show what we are busy with
+      console.log(
+        `\t${event.section}:${event.method}:: (phase=${phase.toString()})`
+      );
+      console.log(`\t\t${event.meta.documentation.toString()}`);
+
+      // loop through each of the parameters, displaying the type and data
+      event.data.forEach((data, index) => {
+        console.log(`\t\t\t${types[index].type}: ${data.toString()}`);
+      });
+    });
+  }
+
+  //these are queries for current storage
+  const completedTxs = await api.query.swapModule.completeReqMap.entries();
+  const pendingTxs = await api.query.swapModule.pendingReqMap.entries(); // pending should almost always be  0-9 length
+
+  return signedBlock.block.header.number.toNumber();
+}

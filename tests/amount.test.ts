@@ -166,6 +166,10 @@ describe("test getPercentageBN", () => {
   });
 });
 describe("test capNumber", () => {
+  test("number 0.0000000000000004", () => {
+    let res: string = capNumber("0.0000000000000004");
+    expect(res).toEqual("0.0000000000000004");
+  });
   test("number 0.099999002939658104", () => {
     let res: string = capNumber("0.099999002939658104");
     expect(res).toEqual("0.0999990");
