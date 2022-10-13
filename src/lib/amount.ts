@@ -384,3 +384,18 @@ export function getUserTokenShare(userShare: BN, poolShare: BN, liq0: BN) {
     .div(poolShare)
     .div(precision_multiplier);
 }
+
+export function disableSwap(
+  pool: PoolInfo | undefined,
+  poolRatio: string,
+  tokenOut: TokenInfoFull | undefined,
+  tokenOutAmount: string,
+  error: string
+) {
+  return (
+    !pool ||
+    (pool && poolRatio === "0") ||
+    toAmountInput(tokenOutAmount, tokenOut!.wei).raw.isZero() ||
+    !!error
+  );
+}
