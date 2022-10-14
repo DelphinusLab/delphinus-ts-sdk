@@ -1,5 +1,6 @@
 import BN from "bn.js";
 import { getTokenIndex as getTokenIndexFromDeploy } from "delphinus-deployment/src/token-index";
+import NodeConfig from "delphinus-deployment/config/substrate-node.json";
 import { getAPI, getCryptoUtil, stringToBN } from "./api";
 import { SubstrateAccountInfo } from "../type";
 import { stringNumberToBN } from "./utils";
@@ -182,4 +183,47 @@ export async function getTransactionHistory() {
   const pendingTxs = await api.query.swapModule.pendingReqMap.entries(); // pending should almost always be  0-9 length
 
   return signedBlock.block.header.number.toNumber();
+}
+
+export async function getAccountTransactions() {
+  console.log(NodeConfig.address);
+  const api = await getAPI();
+  const completedTxs = await api.query.swapModule.completeReqMap.entries();
+
+  const pendingTxs = await api.query.swapModule.pendingReqMap.entries();
+
+  let rawMap = completedTxs;
+  const map = new Map(rawMap.map((kv: any) => [kv[0].args[0].toHex(), kv[1]]));
+
+  let completeData = Array.from(map.entries())
+    .map((kv) => [dataToBN(kv[0]), kv[1]] as [BN, any])
+    .sort((kv1, kv2) => (kv1[0].sub(kv2[0]).isNeg() ? -1 : 1));
+
+  // for (let tx of completeData) {
+  //   console.log(tx[1].toString(), "tx");
+  //   let keys = Object.keys(JSON.parse(tx[1].toString()));
+  //   console.log(keys, "ops");
+  // }
+  let rawMap1 = pendingTxs;
+  const pendMap = new Map(
+    rawMap1.map((kv: any) => [kv[0].args[0].toHex(), kv[1]])
+  );
+
+  let pendingData = Array.from(pendMap.entries())
+    .map((kv) => [dataToBN(kv[0]), kv[1]] as [BN, any])
+    .sort((kv1, kv2) => (kv1[0].sub(kv2[0]).isNeg() ? -1 : 1));
+
+  return [completeData, pendingData];
+}
+export function dataToBN(data: any) {
+  if (data.toHex) {
+    data = data.toHex();
+  }
+  return new BN(data.replace(/0x/, ""), 16);
+}
+//from monitor db, grab all transactions with sender === l2account.account
+export async function getMongoData() {
+  let queryAddr = (NodeConfig.address as string).replace("wss://", "http://");
+  let events = await (await fetch(queryAddr + ":8090/l2event/0/1000")).json(); //change to proper query info
+  return events;
 }
