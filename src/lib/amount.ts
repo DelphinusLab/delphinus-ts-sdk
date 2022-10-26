@@ -96,7 +96,7 @@ export function fractionalToBN(num: string, wei: number): BN {
   }
 
   if (fraction.length > multiplier.length - 1) {
-    throw new Error("fractional component exceeds decimals");
+    throw new Error(`Maximum decimals of ${wei} exceeded.`);
   }
 
   if (fraction === "") {

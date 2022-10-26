@@ -10,7 +10,9 @@ export const encodeNum = (num: any) => {
       ? num.toString().substring(decimalIndex + 1, num.toString().length)
       : "";
   //trim leading 0s
-  whole = whole.replace(/^0+/, "") ? whole : "0";
+  console.log(whole, "whole b4");
+  whole = whole.replace(/^0+/, "") || "0";
+  console.log(whole, "whole after");
   return (
     whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (decimal ? "." + decimal : "")
   );
