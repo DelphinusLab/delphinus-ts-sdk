@@ -392,10 +392,11 @@ export function disableSwap(
   tokenOutAmount: string,
   error: string
 ) {
+  if (!tokenOut) return true;
   return (
     !pool ||
     (pool && poolRatio === "0") ||
-    toAmountInput(tokenOutAmount, tokenOut!.wei).raw.isZero() ||
+    toAmountInput(tokenOutAmount, tokenOut.wei).raw.isZero() ||
     !!error
   );
 }
