@@ -24,12 +24,17 @@ export function getPercentageBN(bn: BN, total: BN, precision: number) {
       style: "percent",
       minimumFractionDigits: 2,
     });
-  return (
-    bn.mul(new BN(precision)).div(total).toNumber() / precision
-  ).toLocaleString(undefined, {
-    style: "percent",
-    minimumFractionDigits: 2,
-  });
+
+  let pct = (bn.mul(new BN(precision)).div(total).toNumber() / precision)
+    .toLocaleString(undefined, {
+      style: "percent",
+      minimumFractionDigits: 2,
+    })
+    .split("%")[0];
+  if (pct === "0.00" && bn.gt(new BN(0))) {
+    return "<0.01%";
+  }
+  return pct + "%";
 }
 
 //function to cap a number from string format to a certain significant digits
