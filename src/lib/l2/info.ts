@@ -1,6 +1,6 @@
 import BN from "bn.js";
 import { getTokenIndex as getTokenIndexFromDeploy } from "delphinus-deployment/src/token-index";
-import NodeConfig from "delphinus-deployment/config/substrate-node.json";
+import ServerConfig from "delphinus-deployment/config/server.json";
 import { getAPI, getCryptoUtil, stringToBN } from "./api";
 import { SubstrateAccountInfo } from "../type";
 import { stringNumberToBN } from "./utils";
@@ -120,101 +120,11 @@ export async function getPoolList() {
   return poolInfo;
 }
 
-export async function getTransactionHistory() {
-  const api = await getAPI();
-  const signedBlock = await api.rpc.chain.getBlock();
-  console.log(signedBlock, "latest block");
-  console.log(signedBlock.block.header.number.toHex(), "block number");
-  //api.at is newer package version
-  // const apiAt = await api.at(signedBlock.block.header.hash);
-  // signedBlock.block.extrinsics.forEach((ex, index) => {
-  //   // the extrinsics are decoded by the API, human-like view
-  //   console.log(index, ex.toHuman());
-
-  //   const {
-  //     isSigned,
-  //     meta,
-  //     method: { args, method, section },
-  //   } = ex;
-
-  //   // explicit display of name, args & documentation
-  //   console.log(
-  //     `${section}.${method}(${args.map((a) => a.toString()).join(", ")})`
-  //   );
-  //   console.log(meta.documentation.map((d) => d.toString()).join("\n"));
-
-  //   // signer/nonce info
-  //   if (isSigned) {
-  //     console.log(
-  //       `signer=${ex.signer.toString()}, nonce=${ex.nonce.toString()}`
-  //     );
-  //   }
-  // });
-  //FIRST 50 Blocks
-  for (let i = 50; i >= 0; i--) {
-    var hash = await api.rpc.chain.getBlockHash(i);
-    var events = await api.query.system.events.at(hash);
-    var timestamp = await api.query.timestamp.now.at(hash);
-    console.log(
-      `\n #${i} at timestamp: ${timestamp}, Received ${events.length} events:`
-    );
-
-    // loop through the Vec<EventRecord>
-    events.forEach((record) => {
-      // extract the phase, event and the event types
-      const { event, phase } = record;
-      const types = event.typeDef;
-
-      // show what we are busy with
-      console.log(
-        `\t${event.section}:${event.method}:: (phase=${phase.toString()})`
-      );
-      console.log(`\t\t${event.meta.documentation.toString()}`);
-
-      // loop through each of the parameters, displaying the type and data
-      event.data.forEach((data, index) => {
-        console.log(`\t\t\t${types[index].type}: ${data.toString()}`);
-      });
-    });
-  }
-
-  //these are queries for current storage
-  const completedTxs = await api.query.swapModule.completeReqMap.entries();
-  const pendingTxs = await api.query.swapModule.pendingReqMap.entries(); // pending should almost always be  0-9 length
-
-  return signedBlock.block.header.number.toNumber();
-}
-
-export async function getAccountTransactions() {
-  console.log(NodeConfig.address);
-  const api = await getAPI();
-  const completedTxs = await api.query.swapModule.completeReqMap.entries();
-
-  const pendingTxs = await api.query.swapModule.pendingReqMap.entries();
-
-  let rawMap = completedTxs;
-  const map = new Map(rawMap.map((kv: any) => [kv[0].args[0].toHex(), kv[1]]));
-
-  let completeData = Array.from(map.entries())
-    .map((kv) => [dataToBN(kv[0]), kv[1]] as [BN, any])
-    .sort((kv1, kv2) => (kv1[0].sub(kv2[0]).isNeg() ? -1 : 1));
-
-  // for (let tx of completeData) {
-  //   console.log(tx[1].toString(), "tx");
-  //   let keys = Object.keys(JSON.parse(tx[1].toString()));
-  //   console.log(keys, "ops");
-  // }
-  let rawMap1 = pendingTxs;
-  const pendMap = new Map(
-    rawMap1.map((kv: any) => [kv[0].args[0].toHex(), kv[1]])
-  );
-
-  let pendingData = Array.from(pendMap.entries())
-    .map((kv) => [dataToBN(kv[0]), kv[1]] as [BN, any])
-    .sort((kv1, kv2) => (kv1[0].sub(kv2[0]).isNeg() ? -1 : 1));
-
-  return [completeData, pendingData];
-}
+// export async function getAccountTransactions() {
+//   console.log(NodeConfig.address);
+//   const api = await getAPI();
+//   return [completeData, pendingData];
+// }
 export function dataToBN(data: any) {
   if (data.toHex) {
     data = data.toHex();
@@ -222,8 +132,9 @@ export function dataToBN(data: any) {
   return new BN(data.replace(/0x/, ""), 16);
 }
 //from monitor db, grab all transactions with sender === l2account.account
-export async function getMongoData() {
-  let queryAddr = (NodeConfig.address as string).replace("wss://", "http://");
-  let events = await (await fetch(queryAddr + ":8090/l2event/0/1000")).json(); //change to proper query info
-  return events;
+export async function getAllTransactions() {
+  let queryAddr = ServerConfig.address;
+  console.log(queryAddr);
+  let transactions = await (await fetch(queryAddr + "/l2transactions")).json(); //change to proper query info
+  return transactions;
 }
