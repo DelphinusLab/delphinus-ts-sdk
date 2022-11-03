@@ -120,21 +120,20 @@ export async function getPoolList() {
   return poolInfo;
 }
 
-// export async function getAccountTransactions() {
-//   console.log(NodeConfig.address);
-//   const api = await getAPI();
-//   return [completeData, pendingData];
-// }
 export function dataToBN(data: any) {
   if (data.toHex) {
     data = data.toHex();
   }
   return new BN(data.replace(/0x/, ""), 16);
 }
-//from monitor db, grab all transactions with sender === l2account.account
-export async function getAllTransactions() {
-  let queryAddr = ServerConfig.address;
+//from monitor db, grab all transactions with sender === l2account.address
+export async function getAllTransactions(l2Account: SubstrateAccountInfo) {
+  const l2Address = l2Account.address;
+  const l2Acc = l2Account.account;
+  const queryAddr = ServerConfig.address;
   console.log(queryAddr);
-  let transactions = await (await fetch(queryAddr + "/l2transactions")).json(); //change to proper query info
+  const transactions = await (
+    await fetch(queryAddr + "/l2transactions" + `/${l2Address}`)
+  ).json(); //change to proper query info
   return transactions;
 }
