@@ -338,16 +338,21 @@ export function setRequiredAmount(
     let amt = _input
       .mul(new BN(reverse ? pool.amount1! : pool.amount0!))
       .mul(fee)
-      .div(
-        new BN(reverse ? pool.amount0! : pool.amount1!)
-          .sub(_input)
-          .mul(precision_multiplier)
-      );
-    if (amt.lt(new BN(0))) {
+      .div(new BN(reverse ? pool.amount0! : pool.amount1!));
+    let partial = _input
+      .mul(fee)
+      .div(new BN(reverse ? pool.amount0! : pool.amount1!));
+    let denominator = precision_multiplier.sub(partial);
+    console.log(amt.toString(), "amt");
+    console.log(partial.toString(), "partial");
+    console.log(denominator.toString(), "denominator");
+    let final = amt.div(denominator);
+
+    if (final.lt(new BN(0))) {
       throw Error("Not enough liquidity to cover the required amount");
     }
-    console.log(amt.toString(), "amt");
-    setPayCb(fromPreciseWeiRepr(amt, tokenIn.wei).amount);
+    console.log(final.toString(), "final");
+    setPayCb(fromPreciseWeiRepr(final, tokenIn.wei).amount);
   } catch (err: any) {
     error(err.message);
   }
