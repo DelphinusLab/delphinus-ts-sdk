@@ -334,7 +334,8 @@ export function setRequiredAmount(
 
     const fee = new BN(1024).mul(precision_multiplier).div(new BN(1021));
 
-    //calculation for output token (x = yout * poolX / poolY - yOut)
+    //calculation for input token x_in = (yout * poolX  /poolY* fee) / (1 - yOut/poolY * fee)
+    //where fee is the standard 1021/1024 ratio.
     let amt = _input
       .mul(new BN(reverse ? pool.amount1! : pool.amount0!))
       .mul(fee)
