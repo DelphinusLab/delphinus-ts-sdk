@@ -132,8 +132,11 @@ export async function getAllTransactions(l2Account: SubstrateAccountInfo) {
   const l2Acc = l2Account.account;
   const queryAddr = ServerConfig.address;
   console.log(queryAddr);
+  //convert acc index from Hex to int
   const transactions = await (
-    await fetch(queryAddr + "/l2transactions" + `/${l2Address}`)
+    await fetch(
+      queryAddr + "/l2transactions" + `/${l2Address}/${parseInt(l2Acc, 16)}`
+    )
   ).json(); //change to proper query info
   return transactions;
 }
