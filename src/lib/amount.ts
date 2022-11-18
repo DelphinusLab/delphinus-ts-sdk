@@ -291,7 +291,6 @@ export function setSwapAmount(
 
     const _input = fractionalToBN(input, tokenIn.wei);
     console.log(pool.amount1, pool.amount0, "poolamounts");
-    console.log(input, tokenIn.wei, _input.toString(0), "input, wei");
     //precision of calculation
     const precision_multiplier = new BN(10).pow(new BN(precision));
 
@@ -306,7 +305,6 @@ export function setSwapAmount(
           .add(new BN(reverse ? pool.amount1! : pool.amount0!))
           .mul(precision_multiplier)
       );
-    console.log(amt);
 
     setGetCb(fromPreciseWeiRepr(amt, tokenOut.wei).amount);
   } catch (err: any) {
