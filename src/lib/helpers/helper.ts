@@ -47,12 +47,14 @@ export function capNumber(num: string, significantDigits: number = 8) {
       if (parts[1][i] === "0") zeros++;
       else break;
     }
-
+    let decimals = parts[1].substring(0, zeros + 1);
     return (
       parts[0] +
       "." +
       (zeros > decimalsToShow && parts[0] === "0"
-        ? parts[1].substring(0, zeros + 1) + "..."
+        ? decimals.length <= parts[1].length
+          ? decimals
+          : decimals + "..."
         : parts[1].substring(0, decimalsToShow))
     );
   }
