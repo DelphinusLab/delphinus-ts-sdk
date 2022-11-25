@@ -22,7 +22,7 @@ export function getTokenIndex(chainId: string, tokenAddress: string) {
 export async function querySubstrateBalance(account: string) {
   const api = await getAPI();
   const account_info = await api.query.system.account(account);
-  const balance = account_info.data.free.toHuman();
+  const balance = account_info.data.free.toString();
   return balance;
 }
 
