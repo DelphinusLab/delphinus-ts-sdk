@@ -70,3 +70,10 @@ export interface BaseExtrinsic {
   method: string;
   signer: string;
 }
+
+export interface TxReceipt {
+  blockNumber: number;
+  extrinsicIndex: number;
+  blockHash: string;
+  fee: string;
+}
