@@ -96,11 +96,11 @@ function sendUntilFinalize(l2Account: SubstrateAccountInfo) {
                       blockHash: block.header.hash.toHex(),
                       fee: fee.toString(),
                     };
-                    const temp_val =
+                    const tx_id =
                       receipt.blockNumber + "-" + receipt.extrinsicIndex;
                     const rid = get_rid(suc_event);
-                    console.log(temp_val.toString(), "temp_val");
-                    resolve([temp_val.toString(), rid.toString(), receipt.fee]);
+                    console.log(tx_id.toString(), "tx_id");
+                    resolve([tx_id.toString(), rid.toString(), receipt.fee]);
                   }
                 }
               }
@@ -140,7 +140,8 @@ export async function withdraw(
     state: string,
     hint: string,
     receipt: string,
-    ratio: number
+    ratio: number,
+    fee: string
   ) => void,
   error?: (m: string) => void
 ) {
@@ -171,8 +172,8 @@ export async function withdraw(
     );
     console.log("tx finalized at:", tx);
     if (progress) {
-      progress("transaction", "done", tx[0], 70);
-      progress("finalize", "queued", tx[1], 100);
+      progress("transaction", "done", tx[0], 70, tx[2]);
+      progress("finalize", "queued", tx[1], 100, tx[2]);
     }
   } catch (e: any) {
     error?.(e.toString());
@@ -189,7 +190,8 @@ export async function supply(
     state: string,
     hint: string,
     receipt: string,
-    ratio: number
+    ratio: number,
+    fee: string
   ) => void,
   error?: (m: string) => void
 ) {
@@ -216,8 +218,8 @@ export async function supply(
     );
     console.log("tx finalized at:", tx);
     if (progress) {
-      progress("transaction", "done", tx[0], 70);
-      progress("finalize", "queued", tx[1], 100);
+      progress("transaction", "done", tx[0], 70, tx[2]);
+      progress("finalize", "queued", tx[1], 100, tx[2]);
     }
   } catch (e: any) {
     error?.(e.toString());
@@ -234,7 +236,8 @@ export async function retrieve(
     state: string,
     hint: string,
     receipt: string,
-    ratio: number
+    ratio: number,
+    fee: string
   ) => void,
   error?: (m: string) => void
 ) {
@@ -261,8 +264,8 @@ export async function retrieve(
     );
 
     if (progress) {
-      progress("transaction", "done", tx[0], 70);
-      progress("finalize", "queued", tx[1], 100);
+      progress("transaction", "done", tx[0], 70, tx[2]);
+      progress("finalize", "queued", tx[1], 100, tx[2]);
     }
   } catch (e: any) {
     error?.(e.toString());
