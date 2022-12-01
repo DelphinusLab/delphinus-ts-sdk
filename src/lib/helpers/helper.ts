@@ -48,13 +48,15 @@ export function capNumber(num: string, significantDigits: number = 8) {
       else break;
     }
     let decimals = parts[1].substring(0, zeros + 1);
+    console.log("decimals", decimals, decimals.length, parts[1].length);
+
     return (
       parts[0] +
       "." +
       (zeros > decimalsToShow && parts[0] === "0"
-        ? decimals.length <= parts[1].length
-          ? decimals
-          : decimals + "..."
+        ? decimals.length < parts[1].length
+          ? decimals + "..."
+          : decimals
         : parts[1].substring(0, decimalsToShow))
     );
   }
