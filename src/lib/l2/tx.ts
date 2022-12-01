@@ -54,12 +54,11 @@ function sendUntilFinalize(l2Account: SubstrateAccountInfo) {
           l2Account.injector,
           { nonce },
           async ({ events = [], status }) => {
-            console.log("Transaction status:", status.toJSON());
-            if (status.isInBlock) {
-              console.log(
-                `Transaction included at blockHash ${status.asInBlock}`
-              );
-            }
+            // if (status.isInBlock) {
+            //   console.log(
+            //     `Transaction included at blockHash ${status.asInBlock}`
+            //   );
+            // }
             if (status.isFinalized) {
               unsub();
               const suc_event = events.find((e) => {
@@ -100,6 +99,8 @@ function sendUntilFinalize(l2Account: SubstrateAccountInfo) {
                       receipt.blockNumber + "-" + receipt.extrinsicIndex;
                     const rid = get_rid(suc_event);
                     console.log(temp_val.toString(), "temp_val");
+                    //TODO: temporary non-breaking version of the return value, maybe should return as
+                    //TxReceipt type
                     resolve([temp_val.toString(), rid.toString(), receipt.fee]);
                   }
                 }
