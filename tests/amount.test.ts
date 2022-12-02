@@ -172,7 +172,7 @@ describe("test capNumber", () => {
   });
   test("number 0.099999002939658104", () => {
     let res: string = capNumber("0.099999002939658104");
-    expect(res).toEqual("0.0999990");
+    expect(res).toEqual("0.09999900...");
   });
   test("number 1.0000002939658104", () => {
     let res: string = capNumber("1.0000002939658104");
@@ -193,6 +193,11 @@ describe("test capNumber", () => {
   test("number 500.000000000123456789", () => {
     let res: string = capNumber("500.000000000123456789");
     expect(res).toEqual("500.00000");
+  });
+
+  test("number 0.000000011", () => {
+    let res: string = capNumber("0.000000011");
+    expect(res).toEqual("0.00000001...");
   });
 });
 
