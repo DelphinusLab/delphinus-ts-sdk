@@ -1,6 +1,8 @@
 import BN from "bn.js";
 import { queryPoolIndex, queryAccountIndex, queryL2Nonce } from "./info";
-import { SubstrateAccountInfo, TxReceipt } from "../type";
+import { SubstrateAccountInfo, TxReceipt, L1AccountInfo } from "../type";
+import { checkL1Account } from "../l1/tx";
+
 import { SwapHelper, CryptoUtil } from "delphinus-l2-client-helper/src/swap";
 import { queryCurrentL1Account } from "../l1/query";
 import { getAPI, getCryptoUtil, stringToBN } from "./api";
@@ -132,6 +134,7 @@ export async function setKey(
 }
 
 export async function withdraw(
+  l1Account: L1AccountInfo,
   l2Account: SubstrateAccountInfo,
   chainId: string,
   token: string,
@@ -146,6 +149,7 @@ export async function withdraw(
   error?: (m: string) => void
 ) {
   try {
+    await checkL1Account(l1Account);
     console.log("withdraw:", chainId, token);
     const accountAddress = l2Account.address;
     const tokenIndex = getTokenIndex(chainId, token);
@@ -181,6 +185,7 @@ export async function withdraw(
 }
 
 export async function supply(
+  l1Account: L1AccountInfo,
   l2Account: SubstrateAccountInfo,
   tokenIndex0: number,
   tokenIndex1: number,
@@ -196,6 +201,7 @@ export async function supply(
   error?: (m: string) => void
 ) {
   try {
+    await checkL1Account(l1Account);
     const reverse = tokenIndex0 > tokenIndex1;
     const poolIndex = await (reverse
       ? queryPoolIndex(tokenIndex1, tokenIndex0)
@@ -227,6 +233,7 @@ export async function supply(
 }
 
 export async function retrieve(
+  l1Account: L1AccountInfo,
   l2Account: SubstrateAccountInfo,
   tokenIndex0: number,
   tokenIndex1: number,
@@ -242,6 +249,7 @@ export async function retrieve(
   error?: (m: string) => void
 ) {
   try {
+    await checkL1Account(l1Account);
     const reverse = tokenIndex0 > tokenIndex1;
     const poolIndex = await (reverse
       ? queryPoolIndex(tokenIndex1, tokenIndex0)
@@ -273,6 +281,7 @@ export async function retrieve(
 }
 
 export async function swap(
+  l1Account: L1AccountInfo,
   l2Account: SubstrateAccountInfo,
   tokenIndex0: number,
   tokenIndex1: number,
@@ -288,6 +297,7 @@ export async function swap(
   error?: (m: string) => void
 ) {
   try {
+    await checkL1Account(l1Account);
     const reverse = tokenIndex0 > tokenIndex1;
     const poolIndex = await (reverse
       ? queryPoolIndex(tokenIndex1, tokenIndex0)
