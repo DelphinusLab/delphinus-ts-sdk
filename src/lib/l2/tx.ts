@@ -1,7 +1,8 @@
 import BN from "bn.js";
 import { queryPoolIndex, queryAccountIndex, queryL2Nonce } from "./info";
-import { SubstrateAccountInfo, L1AccountInfo } from "../type";
+import { SubstrateAccountInfo, TxReceipt, L1AccountInfo } from "../type";
 import { checkL1Account } from "../l1/tx";
+
 import { SwapHelper, CryptoUtil } from "delphinus-l2-client-helper/src/swap";
 import { queryCurrentL1Account } from "../l1/query";
 import { getAPI, getCryptoUtil, stringToBN } from "./api";
@@ -38,43 +39,78 @@ function sendUntilFinalize(l2Account: SubstrateAccountInfo) {
     ).nonce.toNumber();
     const nonce = new BN(nonceRaw);
 
-    let req = await new Promise<[string, string]>(async (resolve, reject) => {
-      console.log("sendUntilFinalize");
-      const get_rid = (e: any) => {
-        const { event, phase } = e;
-        console.log(
-          "event get:",
-          event.data.toString(),
-          event.method,
-          event.section
-        );
-        return event.data[0];
-      };
-      const unsub = await tx.signAndSend(
-        l2Account.injector,
-        { nonce },
-        ({ events = [], status }) => {
-          //if (status.isInBlock) {
-          //  console.log(`Transaction included at blockHash ${status.asInBlock}`);
-          //};
-          if (status.isFinalized) {
-            unsub();
-            const suc_event = events.find((e) => {
-              const { event, phase } = e;
-              return event.section == "swapModule";
-            });
+    let req = await new Promise<[string, string, string]>(
+      async (resolve, reject) => {
+        console.log("sendUntilFinalize");
+        const get_rid = (e: any) => {
+          const { event, phase } = e;
+          console.log(
+            "event get:",
+            event.data.toString(),
+            event.method,
+            event.section
+          );
+          return event.data[0];
+        };
+        const unsub = await tx.signAndSend(
+          l2Account.injector,
+          { nonce },
+          async ({ events = [], status }) => {
+            console.log("Transaction status:", status.toJSON());
+            if (status.isInBlock) {
+              console.log(
+                `Transaction included at blockHash ${status.asInBlock}`
+              );
+            }
+            if (status.isFinalized) {
+              unsub();
+              const suc_event = events.find((e) => {
+                const { event, phase } = e;
+                return event.section == "swapModule";
+              });
+              const err_event = events.find((e) =>
+                api.events.system.ExtrinsicFailed.is(e.event)
+              );
 
-            const err_event = events.find((e) =>
-              api.events.system.ExtrinsicFailed.is(e.event)
-            );
-
-            err_event
-              ? reject(new Error(convertL2Error(err_event).toString()))
-              : resolve([status.asFinalized.toString(), get_rid(suc_event)]);
+              if (err_event) {
+                reject(new Error(convertL2Error(err_event).toString()));
+              } else {
+                const { block } = await api.rpc.chain.getBlock(
+                  status.asFinalized
+                );
+                console.log(`Block number: ${block.header.number}`);
+                for (let i = 0; i < block.extrinsics.length; i++) {
+                  let extrinsic = block.extrinsics[i];
+                  if (
+                    suc_event?.phase.isApplyExtrinsic &&
+                    suc_event.phase.asApplyExtrinsic.eq(i)
+                  ) {
+                    const feeInfo = await api.rpc.payment.queryInfo(
+                      extrinsic.toHex(),
+                      block.header.hash.toHex()
+                    );
+                    const { weight, partialFee } = feeInfo;
+                    console.log(feeInfo.toJSON());
+                    const fee = partialFee.toBn().add(weight.toBn());
+                    const receipt: TxReceipt = {
+                      blockNumber: block.header.number.toNumber(),
+                      extrinsicIndex: i,
+                      blockHash: block.header.hash.toHex(),
+                      fee: fee.toString(),
+                    };
+                    const tx_id =
+                      receipt.blockNumber + "-" + receipt.extrinsicIndex;
+                    const rid = get_rid(suc_event);
+                    console.log(tx_id.toString(), "tx_id");
+                    resolve([tx_id.toString(), rid.toString(), receipt.fee]);
+                  }
+                }
+              }
+            }
           }
-        }
-      );
-    });
+        );
+      }
+    );
     return req;
   };
 }
@@ -107,7 +143,8 @@ export async function withdraw(
     state: string,
     hint: string,
     receipt: string,
-    ratio: number
+    ratio: number,
+    fee: string
   ) => void,
   error?: (m: string) => void
 ) {
@@ -139,8 +176,8 @@ export async function withdraw(
     );
     console.log("tx finalized at:", tx);
     if (progress) {
-      progress("transaction", "done", tx[0], 70);
-      progress("finalize", "queued", tx[1], 100);
+      progress("transaction", "done", tx[0], 70, tx[2]);
+      progress("finalize", "queued", tx[1], 100, tx[2]);
     }
   } catch (e: any) {
     error?.(e.toString());
@@ -158,7 +195,8 @@ export async function supply(
     state: string,
     hint: string,
     receipt: string,
-    ratio: number
+    ratio: number,
+    fee: string
   ) => void,
   error?: (m: string) => void
 ) {
@@ -186,8 +224,8 @@ export async function supply(
     );
     console.log("tx finalized at:", tx);
     if (progress) {
-      progress("transaction", "done", tx[0], 70);
-      progress("finalize", "queued", tx[1], 100);
+      progress("transaction", "done", tx[0], 70, tx[2]);
+      progress("finalize", "queued", tx[1], 100, tx[2]);
     }
   } catch (e: any) {
     error?.(e.toString());
@@ -205,7 +243,8 @@ export async function retrieve(
     state: string,
     hint: string,
     receipt: string,
-    ratio: number
+    ratio: number,
+    fee: string
   ) => void,
   error?: (m: string) => void
 ) {
@@ -233,8 +272,8 @@ export async function retrieve(
     );
 
     if (progress) {
-      progress("transaction", "done", tx[0], 70);
-      progress("finalize", "queued", tx[1], 100);
+      progress("transaction", "done", tx[0], 70, tx[2]);
+      progress("finalize", "queued", tx[1], 100, tx[2]);
     }
   } catch (e: any) {
     error?.(e.toString());
@@ -252,7 +291,8 @@ export async function swap(
     state: string,
     hint: string,
     receipt: string,
-    ratio: number
+    ratio: number,
+    fee: string
   ) => void,
   error?: (m: string) => void
 ) {
@@ -280,10 +320,11 @@ export async function swap(
       amount,
       stringToBN(l2nonce)
     );
+    console.log("tx finalized at:", tx);
 
     if (progress) {
-      progress("transaction", "done", tx[0], 70);
-      progress("finalize", "queued", tx[1], 100);
+      progress("transaction", "done", tx[0], 70, tx[2]);
+      progress("finalize", "queued", tx[1], 100, tx[2]);
     }
   } catch (e: any) {
     console.log(e, "Swap Error");

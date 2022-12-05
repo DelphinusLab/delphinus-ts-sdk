@@ -38,7 +38,8 @@ export function capNumber(num: string, significantDigits: number = 8) {
   if (parts[0].length >= significantDigits) {
     return parts[0];
   }
-  let decimalsToShow = significantDigits - parts[0].length;
+  let decimalsToShow =
+    significantDigits - (parts[0] === "0" ? 0 : parts[0].length);
 
   if (parts[1] && parts[1].length > decimalsToShow) {
     //check number of leading 0s in parts[1]
@@ -48,13 +49,17 @@ export function capNumber(num: string, significantDigits: number = 8) {
       else break;
     }
     let decimals = parts[1].substring(0, zeros + 1);
+
     return (
       parts[0] +
       "." +
-      (zeros > decimalsToShow && parts[0] === "0"
-        ? decimals.length <= parts[1].length
-          ? decimals
-          : decimals + "..."
+      (zeros >= decimalsToShow - 1 && parts[0] === "0"
+        ? decimals.length < parts[1].length
+          ? decimals + "..."
+          : decimals
+        : parts[1].substring(0, decimalsToShow).length < parts[1].length &&
+          parts[0] === "0"
+        ? parts[1].substring(0, decimalsToShow) + "..."
         : parts[1].substring(0, decimalsToShow))
     );
   }
