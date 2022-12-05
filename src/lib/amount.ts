@@ -333,20 +333,26 @@ export function setRequiredAmount(
 
     const fee = new BN(1024).mul(precision_multiplier).div(new BN(1021));
 
-    //calculation for output token (x = yout * poolX / poolY - yOut)
+    //calculation for input token x_in = (yout * poolX  /poolY* fee) / (1 - yOut/poolY * fee)
+    //where fee is the standard 1024/1021 ratio.
     let amt = _input
       .mul(new BN(reverse ? pool.amount1! : pool.amount0!))
       .mul(fee)
-      .div(
-        new BN(reverse ? pool.amount0! : pool.amount1!)
-          .sub(_input)
-          .mul(precision_multiplier)
-      );
-    if (amt.lt(new BN(0))) {
+      .div(new BN(reverse ? pool.amount0! : pool.amount1!));
+    let partial = _input
+      .mul(fee)
+      .div(new BN(reverse ? pool.amount0! : pool.amount1!));
+    let denominator = precision_multiplier.sub(partial);
+    console.log(amt.toString(), "amt");
+    console.log(partial.toString(), "partial");
+    console.log(denominator.toString(), "denominator");
+    let final = amt.div(denominator);
+
+    if (final.lt(new BN(0))) {
       throw Error("Not enough liquidity to cover the required amount");
     }
-    console.log(amt.toString(), "amt");
-    setPayCb(fromPreciseWeiRepr(amt, tokenIn.wei).amount);
+    console.log(final.toString(), "final");
+    setPayCb(fromPreciseWeiRepr(final, tokenIn.wei).amount);
   } catch (err: any) {
     error(err.message);
   }
@@ -405,4 +411,5 @@ export function disableSwap(
     console.log(e);
     return true;
   }
+
 }
