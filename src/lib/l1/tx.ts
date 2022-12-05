@@ -6,7 +6,7 @@ import { L1ClientRole } from "delphinus-deployment/src/types";
 import { PromiseBinder } from "web3subscriber/src/pbinder";
 import { Amount, toPreciseWeiRepr } from "../amount";
 import { convertL1Error } from "../errorhandlers/errors";
-
+import { Web3BrowsersMode } from "web3subscriber/src/client";
 const ss58 = require("substrate-ss58");
 
 function timeout(ms: number) {
@@ -30,7 +30,7 @@ export async function deposit(
     true,
     async (l1client: L1Client) => {
       try {
-        checkL1Account(l1client, l1Account);
+        await checkL1Account(l1Account);
         let token_address = "0x" + tokenAddress;
         let l2account = ss58.addressToAddressId(accountAddress);
         let tokenContract = l1client.getTokenContract(token_address);
@@ -110,7 +110,7 @@ export async function faucet(
     true,
     async (l1client: L1Client) => {
       try {
-        checkL1Account(l1client, l1Account);
+        await checkL1Account(l1Account);
         let token_address = "0x" + tokenAddress;
         let tokenContract = l1client.getGasContract(token_address);
         let pbinder = new PromiseBinder();
@@ -134,8 +134,10 @@ export async function faucet(
   );
 }
 
-function checkL1Account(l1client: L1Client, l1Account: L1AccountInfo) {
-  if (l1client.getDefaultAccount() !== l1Account.address) {
-    throw new Error("The Metamask account is not the default account");
+export async function checkL1Account(l1Account: L1AccountInfo) {
+  const { web3Instance } = new Web3BrowsersMode();
+  let acc = await web3Instance.eth.getAccounts();
+  if (acc[0] !== l1Account.address) {
+    throw new Error("L1 account mismatch.");
   }
 }

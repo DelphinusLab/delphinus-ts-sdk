@@ -291,7 +291,6 @@ export function setSwapAmount(
 
     const _input = fractionalToBN(input, tokenIn.wei);
     console.log(pool.amount1, pool.amount0, "poolamounts");
-
     //precision of calculation
     const precision_multiplier = new BN(10).pow(new BN(precision));
 
@@ -399,10 +398,18 @@ export function disableSwap(
   error: string
 ) {
   if (!tokenOut) return true;
-  return (
-    !pool ||
-    (pool && poolRatio === "0") ||
-    toAmountInput(tokenOutAmount, tokenOut.wei).raw.isZero() ||
-    !!error
-  );
+
+  //catch error if invalid token amount
+  try {
+    return (
+      !pool ||
+      (pool && poolRatio === "0") ||
+      toAmountInput(tokenOutAmount, tokenOut.wei).raw.isZero() ||
+      !!error
+    );
+  } catch (e) {
+    console.log(e);
+    return true;
+  }
+
 }

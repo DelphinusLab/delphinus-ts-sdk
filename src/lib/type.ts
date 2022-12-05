@@ -60,3 +60,20 @@ export interface BridgeMetadata {
   poolInfo: PoolInfo[];
   snap: string;
 }
+
+export interface BaseExtrinsic {
+  blockNumber: number;
+  blockHash: string;
+  extrinsicIndex: number;
+  extrinsicHash: string;
+  module: string;
+  method: string;
+  signer: string;
+}
+
+export interface TxReceipt {
+  blockNumber: number;
+  extrinsicIndex: number;
+  blockHash: string;
+  fee: string;
+}

@@ -1,5 +1,6 @@
 import BN from "bn.js";
 import { getTokenIndex as getTokenIndexFromDeploy } from "delphinus-deployment/src/token-index";
+import ServerConfig from "delphinus-deployment/config/server.json";
 import { getAPI, getCryptoUtil, stringToBN } from "./api";
 import { SubstrateAccountInfo } from "../type";
 import { stringNumberToBN } from "./utils";
@@ -21,7 +22,7 @@ export function getTokenIndex(chainId: string, tokenAddress: string) {
 export async function querySubstrateBalance(account: string) {
   const api = await getAPI();
   const account_info = await api.query.system.account(account);
-  const balance = account_info.data.free.toHuman();
+  const balance = account_info.data.free.toString();
   return balance;
 }
 
@@ -117,4 +118,25 @@ export async function getPoolList() {
     });
   }
   return poolInfo;
+}
+
+export function dataToBN(data: any) {
+  if (data.toHex) {
+    data = data.toHex();
+  }
+  return new BN(data.replace(/0x/, ""), 16);
+}
+//from monitor db, grab all transactions with sender === l2account.address
+export async function getAllTransactions(l2Account: SubstrateAccountInfo) {
+  const l2Address = l2Account.address;
+  const l2Acc = l2Account.account;
+  const queryAddr = ServerConfig.address;
+  console.log(queryAddr);
+  //convert acc index from Hex to int
+  const transactions = await (
+    await fetch(
+      queryAddr + "/l2transactions" + `/${l2Address}/${parseInt(l2Acc, 16)}`
+    )
+  ).json(); //change to proper query info
+  return transactions;
 }
